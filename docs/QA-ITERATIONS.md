@@ -33,3 +33,9 @@
 - Offline browser test: stopped Node server, reloaded the application from cache, restored partial solo progress; map, icon and sprite images all loaded. Server restarted with final dataset afterward.
 - Design QA evidence and explicit viewport/state differences saved in root design-qa.md.
 - Residual limits: no physical phone/LAN hardware pass; no exhaustive legacy-cache migration or connection-cancellation timing matrix.
+
+## Additional multiplayer verification
+- Expanded the real-socket suite to 11 passing tests.
+- Eight participants admitted; ninth rejected; departed participant frees a seat.
+- Switching rooms preserves independent progress and transfers the old room's host role correctly.
+- No production change needed for these cases.

@@ -148,3 +148,62 @@ test("a complete shared turn accepts sequence interactions and late joining", as
   assert.equal(Object.keys(final.room.progress.steps).length, EVENTS.length);
   assert.equal(final.room.players.length, 3);
 });
+test("rooms cap at eight players and release a seat after departure", async (t) => {
+  const server = await startServer({ port: 0, host: "127.0.0.1" });
+  t.after(() => server.close());
+  const clients = [];
+  t.after(() => clients.forEach((c) => c.ws.terminate()));
+  const host = await client(server.wsUrl);
+  clients.push(host);
+  host.send("create_room", { name: "Host" });
+  const { room } = await host.next("room_joined");
+  for (let i = 1; i < 8; i++) {
+    const c = await client(server.wsUrl);
+    clients.push(c);
+    c.send("join_room", { code: room.code, name: "R" + i });
+    assert.equal((await c.next("room_joined")).room.players.length, i + 1);
+  }
+  const extra = await client(server.wsUrl);
+  clients.push(extra);
+  extra.send("join_room", { code: room.code, name: "Nono" });
+  assert.match((await extra.next("error")).message, /piena/);
+  const departing = clients[7];
+  await new Promise((done) => {
+    departing.ws.once("close", done);
+    departing.ws.close();
+  });
+  extra.send("join_room", { code: room.code, name: "Nuovo" });
+  assert.equal((await extra.next("room_joined")).room.players.length, 8);
+});
+test("switching rooms preserves isolation and transfers the abandoned host role", async (t) => {
+  const server = await startServer({ port: 0, host: "127.0.0.1" });
+  t.after(() => server.close());
+  const a = await client(server.wsUrl),
+    b = await client(server.wsUrl),
+    c = await client(server.wsUrl);
+  t.after(() => [a, b, c].forEach((p) => p.ws.terminate()));
+  a.send("create_room", { name: "Ada" });
+  const first = await a.next("room_joined");
+  b.send("join_room", { code: first.room.code, name: "Bruno" });
+  const joined = await b.next("room_joined");
+  await a.next("room_update");
+  c.send("create_room", { name: "Carla" });
+  const second = await c.next("room_joined");
+  a.send("join_room", { code: second.room.code, name: "Ada" });
+  const switched = await a.next("room_joined");
+  assert.equal(switched.room.players.length, 2);
+  assert.equal(switched.room.hostId, second.yourId);
+  const left = await b.next("room_update");
+  assert.equal(left.room.players.length, 1);
+  assert.equal(left.room.hostId, joined.yourId);
+  c.send("start_game");
+  await c.next("game_start");
+  await a.next("game_start");
+  const e = EVENTS[0];
+  c.send("answer", { eventId: e.id, step: 0, choice: e.steps[0].answer });
+  assert.equal((await c.next("answer_result")).ok, true);
+  await a.next("progress");
+  b.send("join_room", { code: first.room.code, name: "Bruno" });
+  const isolated = await b.next("room_joined");
+  assert.deepEqual(isolated.room.progress.steps, {});
+});
