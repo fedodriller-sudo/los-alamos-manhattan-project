@@ -1,0 +1,668 @@
+.spy-room-hint {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+  line-height: 1.4;
+}
+
+.spy-room-status {
+  font-size: 0.82rem;
+  color: #c4b5fd;
+  margin: 0 0 0.75rem;
+  min-height: 1.2em;
+}
+
+/* —— Scene container —— */
+.spy-reader-scene,
+.spy-search-scene {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid #3d4f66;
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.35);
+}
+
+.spy-search-scene {
+  height: min(320px, 52vh);
+  min-height: 280px;
+}
+
+.spy-reader-scene {
+  min-height: 300px;
+}
+
+.spy-room-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.spy-scene-content,
+.spy-scene-interact {
+  position: relative;
+  z-index: 2;
+}
+
+.spy-scene-interact {
+  position: absolute;
+  inset: 0;
+}
+
+.spy-scene-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem 1rem 1.1rem;
+  min-height: 300px;
+}
+
+@media (max-width: 520px) {
+  .spy-scene-content {
+    grid-template-columns: 1fr;
+    min-height: 340px;
+  }
+}
+
+/* ========== LABORATORIO ========== */
+.spy-deco-lab,
+.spy-deco-lab-pu {
+  background: linear-gradient(180deg, #2a3548 0%, #1a2230 45%, #141c28 100%);
+}
+
+.spy-lab-wall {
+  position: absolute;
+  inset: 0 0 35%;
+  background: linear-gradient(180deg, #3d4f66 0%, #2a3548 100%);
+}
+
+.spy-lab-tiles {
+  position: absolute;
+  bottom: 28%;
+  left: 0;
+  right: 0;
+  height: 12%;
+  background: repeating-linear-gradient(
+    90deg,
+    #4a5a70 0,
+    #4a5a70 24px,
+    #3d4d62 24px,
+    #3d4d62 48px
+  );
+  opacity: 0.5;
+}
+
+.spy-lab-bench {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32%;
+  background: linear-gradient(180deg, #5a4a3a 0%, #3d3228 8%, #2a241c 100%);
+  border-top: 3px solid #6a5a48;
+  box-shadow: inset 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.spy-lab-rail {
+  position: absolute;
+  bottom: 30%;
+  left: 5%;
+  right: 5%;
+  height: 4px;
+  background: #888;
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+/* Microscopio */
+.spy-microscope {
+  position: absolute;
+  left: 8%;
+  bottom: 22%;
+  width: 72px;
+  height: 100px;
+  z-index: 1;
+}
+
+.spy-micro-base {
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  width: 56px;
+  height: 14px;
+  background: linear-gradient(180deg, #555, #2a2a2a);
+  border-radius: 4px 4px 2px 2px;
+}
+
+.spy-micro-pillar {
+  position: absolute;
+  bottom: 12px;
+  left: 28px;
+  width: 16px;
+  height: 52px;
+  background: linear-gradient(90deg, #444, #777, #444);
+  border-radius: 3px;
+}
+
+.spy-micro-arm {
+  position: absolute;
+  bottom: 58px;
+  left: 20px;
+  width: 44px;
+  height: 8px;
+  background: #666;
+  border-radius: 4px;
+  transform: rotate(-8deg);
+}
+
+.spy-micro-tube {
+  position: absolute;
+  bottom: 62px;
+  left: 48px;
+  width: 22px;
+  height: 28px;
+  background: linear-gradient(180deg, #888 0%, #444 100%);
+  border-radius: 4px 4px 8px 8px;
+}
+
+.spy-micro-eyepiece {
+  position: absolute;
+  bottom: 86px;
+  left: 52px;
+  width: 14px;
+  height: 10px;
+  background: #222;
+  border-radius: 50%;
+  border: 2px solid #555;
+}
+
+.spy-micro-stage {
+  position: absolute;
+  bottom: 48px;
+  left: 18px;
+  width: 36px;
+  height: 6px;
+  background: #333;
+  border: 1px solid #666;
+}
+
+.spy-micro-light {
+  position: absolute;
+  bottom: 38px;
+  left: 26px;
+  width: 20px;
+  height: 10px;
+  background: #1a3050;
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(100, 180, 255, 0.35);
+}
+
+/* Becher & vetro */
+.spy-beaker {
+  position: absolute;
+  bottom: 30%;
+  width: 28px;
+  height: 44px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.spy-beaker-a {
+  left: 28%;
+}
+
+.spy-beaker-b {
+  left: 38%;
+  height: 38px;
+  bottom: 31%;
+}
+
+.spy-beaker-mark {
+  position: absolute;
+  right: 4px;
+  top: 30%;
+  width: 8px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 0 rgba(255, 255, 255, 0.25);
+}
+
+.spy-liquid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 55%;
+  opacity: 0.85;
+}
+
+.spy-liquid.amber {
+  background: linear-gradient(180deg, #e8a030, #a06018);
+}
+
+.spy-liquid.cyan {
+  background: linear-gradient(180deg, #5ec8e8, #2a88b0);
+  height: 45%;
+}
+
+.spy-liquid.green {
+  background: linear-gradient(180deg, #5ecf8a, #2a8850);
+}
+
+.spy-erlenmeyer {
+  position: absolute;
+  left: 48%;
+  bottom: 29%;
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-bottom: 42px solid rgba(255, 255, 255, 0.12);
+  filter: drop-shadow(0 0 0 2px rgba(255, 255, 255, 0.25));
+}
+
+.spy-erlenmeyer .spy-liquid {
+  position: absolute;
+  left: -14px;
+  bottom: -38px;
+  width: 28px;
+  height: 18px;
+  border-radius: 0 0 4px 4px;
+}
+
+.spy-petri {
+  position: absolute;
+  left: 58%;
+  bottom: 31%;
+  width: 36px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(200, 230, 255, 0.08);
+}
+
+.spy-glovebox {
+  position: absolute;
+  right: 6%;
+  bottom: 26%;
+  width: 100px;
+  height: 72px;
+  border: 3px solid #6a8ab0;
+  border-radius: 8px;
+  background: rgba(20, 40, 60, 0.5);
+}
+
+.spy-glovebox-glass {
+  position: absolute;
+  inset: 6px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(140, 200, 255, 0.15), rgba(80, 140, 200, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.spy-glovebox-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8fd4ff;
+  white-space: nowrap;
+}
+
+/* ========== UFFICIO / ARCHIVIO / DIREZIONE / OFFICINA ========== */
+.spy-deco-office {
+  background: linear-gradient(180deg, #2a2830, #1a1820);
+}
+
+.spy-off-wall {
+  position: absolute;
+  inset: 0 0 30%;
+  background: #3a3848;
+}
+
+.spy-off-desk {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: linear-gradient(180deg, #5a4838, #3a3028);
+}
+
+.spy-off-lamp {
+  position: absolute;
+  right: 15%;
+  bottom: 28%;
+  width: 40px;
+  height: 50px;
+  background: radial-gradient(circle at 50% 0%, #ffe8a0, transparent 70%);
+  opacity: 0.5;
+}
+
+.spy-deco-archive {
+  background: linear-gradient(180deg, #2a2838, #181820);
+}
+
+.spy-arch-shelf {
+  position: absolute;
+  left: 8%;
+  bottom: 25%;
+  width: 35%;
+  height: 45%;
+  background: linear-gradient(180deg, #4a4038, #2a2420);
+  border: 2px solid #5a5048;
+}
+
+.spy-arch-shelf-2 {
+  left: 48%;
+  width: 40%;
+}
+
+.spy-arch-lamp {
+  position: absolute;
+  top: 15%;
+  right: 20%;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8d0, #c9a227 60%, transparent);
+  opacity: 0.4;
+}
+
+.spy-deco-director {
+  background: linear-gradient(180deg, #2a3040, #1a2030);
+}
+
+.spy-dir-desk {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 28%;
+  background: linear-gradient(180deg, #4a3828, #2a2018);
+  border-top: 2px solid #c9a227;
+}
+
+.spy-dir-window {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45%;
+  height: 35%;
+  background: linear-gradient(180deg, #6a90b8, #3a5878);
+  border: 4px solid #5a5040;
+  opacity: 0.7;
+}
+
+.spy-deco-workshop {
+  background: linear-gradient(180deg, #2a2828, #1a1818);
+}
+
+.spy-shop-bench {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: #3a3530;
+}
+
+/* —— Macchinetta —— */
+.spy-machine {
+  background: linear-gradient(180deg, #3a4050, #222830);
+  border: 2px solid #6a7088;
+  border-radius: 12px;
+  padding: 0.75rem;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.spy-visual-lab .spy-machine,
+.spy-visual-lab-pu .spy-machine {
+  border-color: #5a8ab0;
+  background: linear-gradient(180deg, #2a3848, #1a2430);
+}
+
+.spy-machine-top {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.spy-machine-body {
+  background: #1a2030;
+  border-radius: 8px;
+  padding: 0.5rem;
+  border: 1px solid #4a5068;
+}
+
+.spy-machine-screen {
+  height: 36px;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #1a3050, #0a1828);
+  border: 1px solid #3a5880;
+  box-shadow: inset 0 0 16px rgba(80, 160, 255, 0.15);
+}
+
+.spy-machine-slot {
+  min-height: 72px;
+  border: 2px dashed #6a7a9a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding: 0.5rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.spy-machine-slot.hover {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.spy-machine-light {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #444;
+  margin: 0.65rem auto 0;
+}
+
+.spy-machine-light.ok {
+  background: var(--green);
+  box-shadow: 0 0 14px var(--green);
+}
+
+.spy-machine-light.bad {
+  background: var(--danger);
+  box-shadow: 0 0 14px var(--danger);
+}
+
+.spy-machine.shake {
+  animation: spy-shake 0.35s ease;
+}
+
+@keyframes spy-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+.spy-doc-pile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.spy-pile-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  color: #b8c8e0;
+}
+
+.spy-doc-chip {
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #8a8070;
+  background: linear-gradient(180deg, #fffaf0, #e8e0d0);
+  color: #2a2830;
+  font-size: 0.78rem;
+  cursor: grab;
+  line-height: 1.3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.spy-doc-chip.dragging {
+  opacity: 0.75;
+}
+
+.spy-doc-chip.taken {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* —— Oggetti trascinabili —— */
+.spy-movable {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0.35rem 0.5rem 0.45rem;
+  border-radius: 10px;
+  border: 2px solid #6a7a90;
+  background: rgba(30, 40, 55, 0.92);
+  color: var(--text);
+  font-size: 0.68rem;
+  cursor: grab;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  z-index: 4;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.spy-movable-label {
+  max-width: 72px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.spy-movable-sprite {
+  display: block;
+  width: 44px;
+  height: 36px;
+  background: #4a5568;
+  border-radius: 6px;
+}
+
+.spy-movable.dragging {
+  z-index: 8;
+  border-color: #a78bfa;
+  box-shadow: 0 10px 28px rgba(139, 92, 246, 0.35);
+}
+
+/* Sprite mobili generici */
+.spy-movable-furniture-table .spy-movable-sprite {
+  background: linear-gradient(180deg, #6a5040 30%, #4a3828 100%);
+  height: 28px;
+  border-radius: 4px 4px 2px 2px;
+}
+
+.spy-movable-furniture-shoes .spy-movable-sprite {
+  background: radial-gradient(ellipse at 30% 60%, #5a4030, #2a2018);
+  border-radius: 40% 40% 50% 50%;
+}
+
+.spy-movable-furniture-cabinet .spy-movable-sprite {
+  background: linear-gradient(180deg, #4a5060, #2a3040);
+  height: 42px;
+}
+
+/* Lab mobili */
+.spy-movable-lab-drawer .spy-movable-sprite {
+  background: linear-gradient(180deg, #5a4a38, #3a3028);
+  border: 2px solid #6a5a48;
+  height: 22px;
+}
+
+.spy-movable-lab-coat .spy-movable-sprite {
+  background: linear-gradient(180deg, #f0f4f8, #c8d0d8);
+  border-radius: 8px 8px 4px 4px;
+  height: 40px;
+}
+
+.spy-movable-lab-cabinet .spy-movable-sprite {
+  background: linear-gradient(180deg, #e8ece8, #a8b0a8);
+  height: 44px;
+  border: 2px solid #888;
+}
+
+/* Workshop */
+.spy-movable-shop-cart .spy-movable-sprite {
+  background: #5a5048;
+  border-radius: 4px;
+}
+
+.spy-movable-shop-crate .spy-movable-sprite {
+  background: linear-gradient(135deg, #6b5344, #4a3828);
+}
+
+.spy-movable-shop-locker .spy-movable-sprite {
+  background: linear-gradient(180deg, #6a7078, #3a4048);
+  height: 42px;
+}
+
+.spy-hidden-doc {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  max-width: 46%;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.68rem;
+  border-radius: 6px;
+  border: 1px solid #c9a227;
+  background: linear-gradient(180deg, #fff8e8, #f0e8d0);
+  color: #2a2010;
+  cursor: pointer;
+  z-index: 5;
+  text-align: left;
+  line-height: 1.25;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.spy-hidden-doc::before {
+  content: "📄 ";
+}
+
+.spy-hidden-doc.wrong {
+  opacity: 0.55;
+  border-color: #888;
+}
+
+.spy-hidden-doc.taken {
+  border-color: var(--green);
+  background: linear-gradient(180deg, #d8f8e8, #b8e8c8);
+}

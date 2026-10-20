@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manhattan Project — Los Alamos</title>
+  <link rel="stylesheet" href="css/game.css" />
+  <link rel="stylesheet" href="css/minigames.css" />
+  <link rel="stylesheet" href="css/spy-rooms.css" />
+  <link rel="stylesheet" href="css/mission-lab.css" />
+  <link rel="stylesheet" href="css/detailed-missions.css" />
+  <link rel="stylesheet" href="css/location-games.css" />
+</head>
+<body>
+  <div id="file-warning" class="file-warning hidden">
+    I click non funzionano aprendo il file direttamente. Solo: <code>python3 serve.py</code> (locale) o
+    <code>cd server && npm start</code> (multigiocatore). Poi <strong>http://127.0.0.1:8765</strong>
+  </div>
+
+  <div id="role-screen" class="screen">
+    <p class="era">Project Y · 1943–1945</p>
+    <h1>Manhattan Project</h1>
+    <h2 class="tagline">Los Alamos</h2>
+    <p class="intro">
+      Sei sulla mesa del <strong>Pajarito Plateau</strong>: laboratorio segreto per la bomba atomica.
+      Completa gli obiettivi sulla mappa — o agisci come <strong>spia sovietica</strong> infiltrata tra gli scienziati.
+    </p>
+    <div id="resume-panel" class="resume-panel hidden">
+      <button type="button" id="btn-resume" class="btn primary">Continua la partita</button>
+      <p id="resume-summary" class="note resume-summary"></p>
+      <button type="button" id="btn-discard-save" class="btn small">Inizia da capo (cancella salvataggio)</button>
+    </div>
+    <p class="role-prompt">Scegli il ruolo per una nuova partita</p>
+    <div class="role-buttons">
+      <button type="button" data-role="staff" class="btn primary">Solo — Personale</button>
+      <button type="button" data-role="spy" class="btn danger">Solo — Spia</button>
+      <button type="button" id="btn-go-online" class="btn">Multigiocatore online</button>
+    </div>
+    <p id="role-blurb" class="note"></p>
+  </div>
+
+  <div id="lobby-screen" class="screen hidden">
+    <p class="era">Multigiocatore · WebSocket</p>
+    <h2>Stanza online</h2>
+    <p class="intro">
+      Un giocatore <strong>crea la stanza</strong> e condivide il codice. Gli altri si uniscono dallo stesso indirizzo
+      (es. <code>http://IP-del-host:8765</code>). Obiettivi del personale <strong>condivisi</strong>; vedete gli altri sulla mappa.
+    </p>
+    <div class="lobby-form">
+      <label class="lobby-field">
+        Il tuo nome
+        <input type="text" id="lobby-name" maxlength="24" value="Scienziato" autocomplete="nickname" />
+      </label>
+      <button type="button" id="btn-create-room" class="btn primary">Crea stanza</button>
+      <div class="lobby-join-row">
+        <input type="text" id="lobby-code" placeholder="Codice stanza" maxlength="6" autocapitalize="characters" />
+        <button type="button" id="btn-join-room" class="btn">Entra</button>
+      </div>
+    </div>
+    <p id="lobby-error" class="lobby-error hidden"></p>
+    <div id="lobby-waiting" class="lobby-waiting hidden">
+      <p class="lobby-code-line">Codice stanza: <strong id="lobby-code-display"></strong></p>
+      <p class="note">Invia questo codice agli amici (stesso URL del sito).</p>
+      <ul id="lobby-players" class="lobby-players"></ul>
+      <button type="button" id="btn-start-online" class="btn primary">Avvia partita (solo host)</button>
+      <p class="note">Minimo 3 giocatori per spie e voti. Circa <strong>30% spie</strong> e <strong>70% personale</strong>. Riunione d’emergenza = votare chi espellere.</p>
+    </div>
+    <button type="button" id="btn-lobby-back" class="btn small">Torna al menu</button>
+  </div>
+
+  <div id="game-screen" class="screen hidden">
+    <header class="hud">
+      <div>
+        <strong>Manhattan Project · Los Alamos</strong>
+        <span id="task-total">0 / 12</span>
+        <span id="crit-progress" class="opp-badge">Critici: 0/3</span>
+        <span id="online-badge" class="opp-badge hidden">Online</span>
+        <span id="room-code-badge" class="opp-badge hidden"></span>
+      </div>
+      <div class="hud-actions">
+        <button type="button" id="btn-meeting" class="btn small">Riunione d’emergenza</button>
+        <button type="button" id="btn-intel" class="btn small danger hidden">Dispatch a Mosca</button>
+        <button type="button" id="btn-exit" class="btn small">Esci e salva</button>
+        <button type="button" id="btn-new-game" class="btn small">Inizia da capo</button>
+      </div>
+    </header>
+    <p class="hud-hint">
+      <strong>WASD</strong> o frecce su tutta la mappa · <strong>E</strong> o pin sull’edificio ·
+      pin <span class="legend-gold">dorati</span> = Direzione Project Y · online: riunione = voto espulsione
+    </p>
+
+    <div class="layout map-layout">
+      <aside class="task-panel task-panel-side">
+        <h2>Obiettivi</h2>
+        <ul id="task-list"></ul>
+      </aside>
+
+      <div class="map-column">
+        <div id="nearby-panel" class="nearby-panel hidden">
+          <p class="nearby-label">Sei vicino a</p>
+          <h3 id="nearby-title"></h3>
+          <p id="nearby-desc" class="nearby-desc"></p>
+          <button type="button" id="nearby-action" class="btn primary small">Apri missioni (E)</button>
+        </div>
+
+        <div id="map-viewport" class="map-viewport" tabindex="0">
+          <div id="map-world" class="map-world">
+            <div class="map-atmosphere" aria-hidden="true"></div>
+            <img id="map-image" src="img/los-alamos-site.svg" alt="Pianificazione Technical Area Los Alamos (senza etichette)" />
+            <div id="map-zones" class="map-zones" aria-label="Edifici e luoghi"></div>
+            <div id="remote-players" class="remote-players" aria-hidden="false"></div>
+            <div id="player" class="player" title="Il tuo personaggio" aria-label="Personaggio">
+              <span class="player-sprite" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="win-banner" class="win-banner hidden" role="status"></div>
+    <div id="lose-banner" class="win-banner lose hidden" role="status"></div>
+  </div>
+
+  <div id="task-modal" class="modal modal-mission hidden" role="dialog" aria-modal="true">
+    <div id="task-modal-card" class="modal-card mission-card" data-mission-theme="technical" onclick="event.stopPropagation()">
+      <div class="mission-lab-backdrop" aria-hidden="true">
+        <div class="mission-lab-wall"></div>
+        <div class="mission-lab-rack"></div>
+        <div class="mission-lab-instruments"></div>
+        <div class="mission-lab-bench"></div>
+        <div class="mission-lab-lamp"></div>
+        <div class="mission-lab-vignette"></div>
+      </div>
+      <div class="mission-content">
+        <header class="mission-header">
+          <div>
+            <p class="mission-era">Technical Area · 1944</p>
+            <h2 id="task-modal-title">Luogo</h2>
+          </div>
+          <button type="button" id="close-task" class="btn icon" aria-label="Chiudi">×</button>
+        </header>
+        <div id="task-pick" class="task-pick"></div>
+        <div id="task-minigame" class="task-minigame"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="meeting-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card meeting-card" onclick="event.stopPropagation()">
+      <h2>Riunione d’emergenza</h2>
+      <p id="meeting-intro" class="meeting-speaker">Briefing di sicurezza — Technical Area</p>
+      <blockquote id="meeting-quote" class="hidden"></blockquote>
+      <p id="meeting-vote-prompt" class="meeting-vote-prompt hidden">Chi sospetti? Vota per espellere un giocatore dalla Tech Area.</p>
+      <ul id="meeting-vote-list" class="meeting-vote-list hidden"></ul>
+      <button type="button" id="meeting-skip" class="btn small hidden">Salta voto</button>
+      <div id="meeting-result" class="meeting-result hidden" role="status"></div>
+      <button type="button" id="close-meeting" class="btn primary">Torna al lavoro</button>
+    </div>
+  </div>
+
+  <script>
+    if (location.protocol === "file:") {
+      document.getElementById("file-warning").classList.remove("hidden");
+    }
+  </script>
+  <script src="js/tasks-data.js"></script>
+  <script src="js/map-road.js"></script>
+  <script src="js/detailed-missions.js"></script>
+  <script src="js/location-games.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/spy-investigation.js"></script>
+  <script src="js/minigame-scenes.js"></script>
+  <script src="js/minigames.js"></script>
+  <script src="js/task-scene-fill.js"></script>
+  <script src="js/net-client.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

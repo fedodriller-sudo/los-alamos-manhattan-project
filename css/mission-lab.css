@@ -1,0 +1,302 @@
+/* Sfondo laboratorio per modal missioni */
+
+.modal-mission {
+  background: rgba(4, 6, 10, 0.78);
+  backdrop-filter: blur(10px);
+}
+
+.mission-card {
+  --lab-wall-top: #3d4f66;
+  --lab-wall-bot: #1e2838;
+  --lab-bench: #2a2218;
+  --lab-bench-edge: #4a3c28;
+  --lab-glow: rgba(110, 200, 255, 0.22);
+  --lab-glow-pos: 72% 18%;
+  --lab-accent: #8ec8ff;
+  --lab-rack: rgba(255, 255, 255, 0.06);
+  position: relative;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(201, 162, 39, 0.25),
+    0 28px 90px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mission-lab-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.mission-lab-wall {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, var(--lab-wall-top) 0%, var(--lab-wall-bot) 55%, #121820 100%);
+}
+
+.mission-lab-wall::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.mission-lab-rack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12%;
+  height: 42%;
+  background:
+    linear-gradient(180deg, transparent 0%, var(--lab-rack) 8%, transparent 9%),
+    linear-gradient(180deg, transparent 48%, var(--lab-rack) 50%, transparent 51%),
+    linear-gradient(180deg, transparent 78%, var(--lab-rack) 80%, transparent 81%);
+  opacity: 0.9;
+}
+
+.mission-lab-instruments {
+  position: absolute;
+  inset: 8% 6% 38%;
+  opacity: 0.55;
+  background:
+    radial-gradient(ellipse 12% 28% at 14% 55%, var(--lab-glow), transparent 70%),
+    radial-gradient(ellipse 10% 22% at 28% 48%, rgba(255, 255, 255, 0.08), transparent 70%),
+    radial-gradient(ellipse 8% 18% at 42% 62%, var(--lab-glow), transparent 70%),
+    radial-gradient(ellipse 11% 24% at 58% 45%, rgba(255, 255, 255, 0.06), transparent 70%),
+    radial-gradient(ellipse 9% 20% at 76% 58%, var(--lab-glow), transparent 70%),
+    radial-gradient(ellipse 7% 16% at 88% 42%, rgba(255, 255, 255, 0.07), transparent 70%);
+  filter: blur(0.5px);
+}
+
+.mission-lab-bench {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34%;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.35) 18%, var(--lab-bench) 28%, #14100c 100%);
+  border-top: 3px solid var(--lab-bench-edge);
+}
+
+.mission-lab-bench::before {
+  content: "";
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 22%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  border-radius: 2px;
+}
+
+.mission-lab-lamp {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 55% 45% at var(--lab-glow-pos), var(--lab-glow), transparent 65%);
+}
+
+.mission-lab-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 95% 85% at 50% 45%, transparent 35%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.mission-content {
+  position: relative;
+  z-index: 1;
+  max-height: 92vh;
+  overflow: auto;
+  padding: 1.1rem 1.35rem 1.35rem;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 14, 22, 0.55) 0%,
+    rgba(10, 14, 22, 0.82) 35%,
+    rgba(8, 11, 18, 0.92) 100%
+  );
+  backdrop-filter: blur(6px);
+  border-radius: inherit;
+}
+
+.mission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+  margin-bottom: 0.25rem;
+}
+
+.mission-era {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--lab-accent);
+  opacity: 0.85;
+}
+
+.mission-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.mission-card .modal-loc-desc {
+  color: rgba(240, 235, 227, 0.75);
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 3px solid var(--lab-accent);
+}
+
+.mission-card .task-pick-btn {
+  background: rgba(20, 28, 40, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(4px);
+  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+}
+
+.mission-card .task-pick-btn:hover {
+  border-color: var(--lab-accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.mission-card .task-pick-btn.opp {
+  border-color: var(--accent);
+  background: rgba(201, 162, 39, 0.12);
+}
+
+.task-minigame h3 {
+  margin: 0.5rem 0 0.75rem;
+  font-size: 1.05rem;
+  color: var(--lab-accent);
+}
+
+.mission-card .minigame {
+  padding: 0.85rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.25);
+}
+
+.mission-card .mg-scene {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mission-card .spy-reader-scene,
+.mission-card .spy-search-scene {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* —— Temi per edificio —— */
+
+.mission-card[data-mission-theme="plutonium"] {
+  --lab-wall-top: #2a3d48;
+  --lab-wall-bot: #141c24;
+  --lab-glow: rgba(61, 214, 140, 0.28);
+  --lab-accent: #5ee0a8;
+  --lab-bench: #1a2820;
+  --lab-bench-edge: #3d6b52;
+}
+
+.mission-card[data-mission-theme="technical"],
+.mission-card[data-mission-theme="maintenance"] {
+  --lab-glow: rgba(110, 200, 255, 0.25);
+  --lab-accent: #8ec8ff;
+}
+
+.mission-card[data-mission-theme="cyclotron"],
+.mission-card[data-mission-theme="neutrons"],
+.mission-card[data-mission-theme="vandegraaff"] {
+  --lab-wall-top: #3a3548;
+  --lab-wall-bot: #1a1828;
+  --lab-glow: rgba(180, 140, 255, 0.3);
+  --lab-glow-pos: 50% 12%;
+  --lab-accent: #c4b5fd;
+}
+
+.mission-card[data-mission-theme="cryo"] {
+  --lab-glow: rgba(180, 230, 255, 0.35);
+  --lab-accent: #a8e4ff;
+  --lab-wall-top: #354a58;
+}
+
+.mission-card[data-mission-theme="chemistry"],
+.mission-card[data-mission-theme="health"],
+.mission-card[data-mission-theme="medical"] {
+  --lab-glow: rgba(100, 220, 180, 0.22);
+  --lab-accent: #7ddeb8;
+  --lab-wall-top: #3a4a42;
+}
+
+.mission-card[data-mission-theme="heAssembly"],
+.mission-card[data-mission-theme="explosives"],
+.mission-card[data-mission-theme="heTransfer"] {
+  --lab-glow: rgba(255, 160, 80, 0.25);
+  --lab-accent: #ffb070;
+  --lab-wall-top: #4a4038;
+  --lab-bench: #2a2218;
+}
+
+.mission-card[data-mission-theme="machineShop"],
+.mission-card[data-mission-theme="foundry"],
+.mission-card[data-mission-theme="boiler"] {
+  --lab-glow: rgba(255, 120, 60, 0.2);
+  --lab-accent: #ff9a6a;
+  --lab-wall-top: #454038;
+  --lab-rack: rgba(255, 180, 100, 0.08);
+}
+
+.mission-card[data-mission-theme="director"] {
+  --lab-glow: rgba(201, 162, 39, 0.35);
+  --lab-glow-pos: 50% 8%;
+  --lab-accent: #e8c84a;
+  --lab-wall-top: #3d3830;
+  --lab-bench: #2a2618;
+}
+
+.mission-card[data-mission-theme="warehouse"],
+.mission-card[data-mission-theme="px"],
+.mission-card[data-mission-theme="motorPool"] {
+  --lab-glow: rgba(160, 180, 200, 0.18);
+  --lab-accent: #b8c8d8;
+  --lab-wall-top: #3a4048;
+}
+
+.mission-card[data-mission-theme="postOffice"],
+.mission-card[data-mission-theme="passOffice"],
+.mission-card[data-mission-theme="commissary"] {
+  --lab-glow: rgba(220, 200, 160, 0.2);
+  --lab-accent: #dcc8a0;
+  --lab-wall-top: #403a34;
+}
+
+.mission-card[data-mission-theme="pond"],
+.mission-card[data-mission-theme="laundry"] {
+  --lab-glow: rgba(120, 200, 255, 0.2);
+  --lab-accent: #90d4f0;
+  --lab-wall-top: #354550;
+}
+
+.mission-card[data-mission-theme="espionage"] {
+  --lab-glow: rgba(139, 92, 246, 0.28);
+  --lab-glow-pos: 30% 20%;
+  --lab-accent: #c4b5fd;
+  --lab-wall-top: #2a2838;
+  --lab-wall-bot: #121018;
+  --lab-bench: #1a1520;
+}

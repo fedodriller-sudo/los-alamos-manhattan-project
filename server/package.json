@@ -1,0 +1,11 @@
+{
+  "name": "manhattan-project-los-alamos-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node game-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
