@@ -1,97 +1,74 @@
-# Manhattan Project — Los Alamos
+# Los Alamos — Il turno di notte
 
-Gioco stile **Among Us** sulla **Technical Area 1** (Manhattan Project / Project Y).
+Un piccolo gioco browser in italiano: esplora una Los Alamos cartoon notturna e attraversa otto episodi ispirati alla vita del laboratorio tra il 1943 e il 1945. Facile, senza timer o penalità. Da soli oppure in cooperativa locale da **2 a 8 persone**.
 
-## Avvio — gioco singolo
+## Avvio
 
-```bash
-cd project-y-game
-python3 serve.py
-```
+Richiede **Node.js 20 o successivo**.
 
-Apri **http://127.0.0.1:8765**
-
-### Installa come app (Product Design incluso)
-
-Non c’è un’app separata «Product Design» da scaricare: l’interfaccia dossier (obiettivi + minigiochi) è già in `mission-ui.js` e `css/product-design.css`.
-
-1. Avvia il server come sopra.
-2. Nel menu principale usa **Installa app** (Chrome/Edge su desktop o Android), oppure dal menu del browser **Installa / Aggiungi a schermo Home**.
-3. Su **iPhone**: Condividi → Aggiungi a Home (il service worker non si registra in locale su `127.0.0.1`; per offline piena installa da un URL HTTPS in rete).
-
-Il multigiocatore richiede comunque il server Node (`server/`) raggiungibile da tutti i giocatori.
-
-## Avvio — multigiocatore online
-
-Serve **Node.js** sul computer che fa da host (stessa porta del sito + WebSocket):
-
-```bash
-cd project-y-game/server
-npm install
+```sh
+npm --prefix server install
 npm start
 ```
 
-1. Tutti aprono lo **stesso URL** (es. `http://192.168.1.10:8765` se l’host è sulla LAN).
-2. Dal menu: **Multigiocatore online** → un giocatore **Crea stanza** e condivide il **codice a 6 caratteri**.
-3. Gli altri inseriscono codice + nome e **Entra**.
-4. L’**host** avvia quando ci sono almeno **3** giocatori.
+Apri **http://localhost:8765**. Il server mostra anche gli indirizzi della rete locale. Una sola applicazione serve sito e WebSocket sulla stessa porta; non servono account o servizi esterni.
 
-### Come funziona (MVP)
+Per cambiare porta: `PORT=8877 npm start`. Per limitare l'accesso al computer host: `HOST=127.0.0.1 npm start`.
 
-- Obiettivi del **personale condivisi** nella stanza (una missione completata vale per tutti).
-- Vedi gli **altri giocatori** muoversi sulla mappa.
-- **~30% spie** e **~70% personale** (minimo **3** giocatori per avviare).
-- **Riunione d’emergenza**: voto per espellere un sospetto; se espelli tutte le spie vince il personale.
-- Mappa ampia **3600×2700** senza etichette: i luoghi si vedono come pin; nome e descrizione nel pannello vicino / missioni.
-- La spia sincronizza furto intel e dispatch con il server.
-- **Non** c’è ancora: anti-cheat, reconnect in partita, sabotaggi.
-- Il salvataggio **localStorage** è disattivato in modalità online.
+### Cooperativa sullo stesso computer
 
-## Stato (v0.4)
+1. Apri il sito in due schede.
+2. Scegli **Gioca con gli amici**, inserisci un nome e crea una stanza.
+3. Nell'altra scheda, entra con il codice di sei caratteri (o il link d'invito).
+4. L'host avvia quando sono presenti almeno due persone.
 
-- Ruoli: **Personale del Progetto** vs **Spia sovietica**
-- **3 missioni ★** critiche alla Direzione Project Y
-- Spia: copia documenti + **Dispatch a Mosca**
-- Vittoria staff: **12** obiettivi (su **100+** missioni) + **3** critici ★
-- **Importante:** apri via HTTP (non doppio-click su `index.html`)
+### Cooperativa tra dispositivi sulla stessa rete
 
-## Prossimi passi
+Tutti aprono l'indirizzo LAN mostrato dal server, ad esempio `http://192.168.1.10:8765`. Non usare `localhost` sugli altri dispositivi: indica il dispositivo stesso. Condividi codice o link generato usando l'indirizzo LAN. Il firewall dell'host deve permettere le connessioni alla porta scelta.
 
-- Riunioni d’emergenza sincronizzate / votazione
-- Sabotaggi (ruolo dedicato)
-- S-Site, V-Site, Gun Site come seconda mappa
+I progressi sono condivisi e verificati dal server. Due risposte simultanee allo stesso passaggio non lo completano due volte. Le persone possono raggiungere una partita già iniziata. Se l'host esce, il ruolo passa a chi resta. Dopo una disconnessione, rientra con il codice: ritroverai i progressi finché almeno una persona è rimasta collegata. Non è un servizio online ospitato: il computer server deve restare acceso.
 
-Obiettivi definiti in `js/tasks-data.js`.
+## Come si gioca
 
-## Pubblicare su GitHub
+- **WASD/frecce** per muoverti, **E** per interagire.
+- Tocca un episodio o un luogo per raggiungerlo automaticamente; durante il tragitto puoi usare il pulsante di interazione per arrivare subito.
+- Scegli una risposta, consulta un indizio se vuoi e riprova senza penalità.
+- Completa un capitolo per sbloccare il successivo: 1943, 1944, 1945.
+- Nel **Diario** trovi fatti documentati, fonti e limiti della ricostruzione.
+- Nelle **Impostazioni** regoli suoni, volume e movimento ridotto. Il sistema rispetta anche `prefers-reduced-motion`.
 
-Il progetto è già un repository Git in questa cartella (`main` con commit iniziale).
+Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Il salvataggio locale singolo resta separato dalle stanze cooperative. Le stanze sono in memoria e scompaiono quando tutti escono o dopo sei ore. Riavviare il server azzera le stanze.
 
-### 1. Crea il repository su GitHub
+La modalità singola può anche usare `python3 serve.py` (senza multiplayer). Su HTTPS/localhost, il service worker conserva gli asset per l'esplorazione offline dopo il primo caricamento. Il multiplayer richiede sempre una connessione al computer host. La disponibilità offline dipende dal browser; l'installazione usa il suo menu di installazione app.
 
-1. Vai su [github.com/new](https://github.com/new).
-2. Nome suggerito: `manhattan-project-los-alamos` (o come preferisci).
-3. **Non** aggiungere README, `.gitignore` o licenza (li hai già in locale).
-4. Crea il repository vuoto.
+## Accuratezza storica
 
-### 2. Collega e carica dal terminale
+Gli avatar, le azioni, gli appunti selezionabili e i dialoghi sono inventati. **La mappa è artistica**, non una planimetria della Technical Area. Gli episodi collegano ogni fatto alle fonti; le datazioni non precise e le collocazioni narrative sono dichiarate.
 
-Sostituisci `TUO-USER` e `NOME-REPO`:
+Il gioco tratta l'accoglienza dei ricercatori, le lezioni di Robert Serber, la biblioteca di Charlotte Serber, la manutenzione delle calcolatrici, il lavoro con le schede perforate, un ricordo di Feynman sulla recinzione e la notizia di Trinity. Il finale include gli abitanti allontanati e le conseguenze del test sulle comunità vicine. Non simula la costruzione di armi o procedure sperimentali reali.
 
-```bash
-cd /Users/fedya/enderlight-end/project-y-game
-git remote add origin https://github.com/TUO-USER/NOME-REPO.git
-git push -u origin main
+Fonti e note editoriali: [docs/HISTORY.md](docs/HISTORY.md).
+
+## Verifica e sviluppo
+
+```sh
+npm test
+npm run check
 ```
 
-Con **GitHub CLI** (se installi `gh` e fai `gh auth login`):
+Ogni push o pull request esegue anche GitHub Actions su Node 20, 22 e 24.
 
-```bash
-cd /Users/fedya/enderlight-end/project-y-game
-gh repo create NOME-REPO --public --source=. --remote=origin --push
-```
+I test usano il runner Node integrato. Quelli multiplayer aprono connessioni esclusivamente loopback: richiedono un ambiente che consenta socket locali.
 
-### Giocare online da GitHub
+- `js/history-data.js`: episodi, scelte e fonti.
+- `js/progress.js`: avanzamento deterministico condiviso da client e server.
+- `js/nightshift.js`: interfaccia, movimento, audio, salvataggio e rete.
+- `css/nightshift.css`: layout responsive e stili.
+- `server/game-server.js`: file pubblici, stanze e sincronizzazione autorevole.
+- `tests/`: progressione e integrazione con client WebSocket reali.
 
-- **GitHub Pages** può servire solo i file statici: il **multigiocatore** (WebSocket) richiede un server Node sempre acceso (Railway, Render, Fly.io, VPS, o il tuo PC con `npm start`).
-- In locale o su un VPS: `cd server && npm install && npm start` e apri la porta **8765**.
+I moduli della precedente versione sono conservati per consultazione, ma non vengono caricati dal nuovo punto d'ingresso. La nuova modalità cooperativa sostituisce spie, votazioni ed espulsioni con episodi condivisi.
+
+Le illustrazioni originali in `img/campus-night.png`, `img/scientist-chibi.png` e `img/researcher-chibi.png` sono generate per questa revisione. Non sono fotografie o documenti storici. Nessuna dipendenza grafica esterna viene caricata dal browser.
+
+Questo server è pensato per sessioni fidate in localhost/LAN, senza account; non include autenticazione o ripristino persistente delle stanze e non è configurato come servizio pubblico Internet. GitHub Pages può ospitare la parte singola, non il server multiplayer.

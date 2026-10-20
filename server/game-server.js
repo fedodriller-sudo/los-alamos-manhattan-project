@@ -1,391 +1,330 @@
-/**
- * Server statico + WebSocket per multigiocatore (stanze con codice).
- * Avvio: cd server && npm install && npm start
- */
-import { createServer } from "http";
+/** Los Alamos co-op: one HTTP/WebSocket origin, no external services. */
+import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
-import { readFileSync, existsSync, statSync } from "fs";
-import { join, dirname, extname } from "path";
-import { fileURLToPath } from "url";
-import { randomBytes, randomInt } from "crypto";
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const PORT = Number(process.env.PORT) || 8765;
-
+import { readFileSync, statSync } from "node:fs";
+import { resolve, dirname, extname, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+import { randomBytes } from "node:crypto";
+import { networkInterfaces } from "node:os";
+import { freshProgress, attempt } from "../js/progress.js";
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".png": "image/png",
   ".svg": "image/svg+xml",
-  ".json": "application/json",
   ".webmanifest": "application/manifest+json",
 };
-
-/** @type {Map<string, Room>} */
-const rooms = new Map();
-
-function genCode() {
-  let code;
-  do {
-    code = randomBytes(3).toString("hex").toUpperCase();
-  } while (rooms.has(code));
-  return code;
-}
-
-function genId() {
-  return randomBytes(8).toString("hex");
-}
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1);
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function createRoom(hostWs) {
-  const code = genCode();
-  const hostId = genId();
-  const room = {
-    code,
-    hostId,
-    started: false,
-    completed: new Set(),
-    players: new Map(),
-    meeting: null,
-    gameOver: null,
+const id = () => randomBytes(8).toString("hex");
+const cleanName = (n) =>
+  (typeof n === "string" ? n : "Ricercatore").trim().slice(0, 24) ||
+  "Ricercatore";
+export async function startServer({
+  port = Number(process.env.PORT) || 8765,
+  host = process.env.HOST || "0.0.0.0",
+} = {}) {
+  const rooms = new Map();
+  const send = (ws, type, payload = {}) => {
+    if (ws.readyState === 1) ws.send(JSON.stringify({ type, ...payload }));
   };
-  rooms.set(code, room);
-  addPlayer(room, hostWs, hostId, "Host", true);
-  return room;
-}
-
-function addPlayer(room, ws, id, name, isHost) {
-  const player = {
-    id,
-    ws,
-    name: name.slice(0, 24) || "Scienziato",
-    x: 45 + randomInt(10),
-    y: 60 + randomInt(8),
-    role: null,
-    isHost: !!isHost,
-    intel: { stolenAt: [], stash: [], dispatch: 0, hubDone: [] },
-    alive: true,
-  };
-  room.players.set(id, player);
-  ws.roomCode = room.code;
-  ws.playerId = id;
-  return player;
-}
-
-function roomPublic(room) {
-  return {
-    code: room.code,
-    started: room.started,
-    hostId: room.hostId,
-    completed: [...room.completed],
-    players: [...room.players.values()].map((p) => ({
-      id: p.id,
-      name: p.name,
-      x: p.x,
-      y: p.y,
-      isHost: p.isHost,
-      alive: p.alive !== false,
-    })),
-    gameOver: room.gameOver,
-  };
-}
-
-function alivePlayers(room) {
-  return [...room.players.values()].filter((p) => p.alive);
-}
-
-function computeSpyCount(n) {
-  if (n < 3) return 0;
-  const spies = Math.round(n * 0.3);
-  return Math.min(n - 1, Math.max(1, spies));
-}
-
-function checkWinCondition(room) {
-  const alive = alivePlayers(room);
-  const spies = alive.filter((p) => p.role === "spy").length;
-  const staff = alive.length - spies;
-  if (spies === 0 && room.started) {
-    return { winner: "crew", reason: "Tutte le spie sono state eliminate." };
-  }
-  if (staff === 0 && spies > 0) {
-    return { winner: "spy", reason: "Le spie controllano la stanza." };
-  }
-  return null;
-}
-
-function endGame(room, result) {
-  room.gameOver = result;
-  for (const [, p] of room.players) {
-    send(p.ws, "game_over", { ...result, room: roomPublic(room) });
-  }
-}
-
-function startMeeting(room, callerId) {
-  if (room.meeting || room.gameOver) return false;
-  const alive = alivePlayers(room);
-  if (alive.length < 2) return false;
-  room.meeting = { callerId, votes: new Map() };
-  const roster = alive.map((p) => ({ id: p.id, name: p.name }));
-  for (const p of alive) {
-    send(p.ws, "meeting_start", { roster, callerId, yourId: p.id });
-  }
-  return true;
-}
-
-function resolveMeeting(room) {
-  const meeting = room.meeting;
-  if (!meeting) return;
-  const tally = new Map();
-  for (const [, target] of meeting.votes) {
-    const key = target || "skip";
-    tally.set(key, (tally.get(key) || 0) + 1);
-  }
-  let best = "skip";
-  let bestN = 0;
-  let tie = false;
-  for (const [k, n] of tally) {
-    if (n > bestN) {
-      bestN = n;
-      best = k;
-      tie = false;
-    } else if (n === bestN && n > 0) {
-      tie = true;
-    }
-  }
-  let ejected = null;
-  let revealedRole = null;
-  if (!tie && best !== "skip" && bestN > 0) {
-    const p = room.players.get(best);
-    if (p && p.alive) {
-      p.alive = false;
-      ejected = { id: p.id, name: p.name };
-      revealedRole = p.role;
-    }
-  }
-  room.meeting = null;
-  const payload = {
-    ejected,
-    revealedRole,
-    tally: Object.fromEntries(tally),
-    room: roomPublic(room),
-  };
-  for (const [, p] of room.players) {
-    send(p.ws, "meeting_result", payload);
-  }
-  const win = checkWinCondition(room);
-  if (win) endGame(room, win);
-}
-
-function send(ws, type, payload) {
-  if (ws.readyState !== 1) return;
-  ws.send(JSON.stringify({ type, ...payload }));
-}
-
-function broadcastRoom(room, type, payload, exceptId) {
-  for (const [id, p] of room.players) {
-    if (id !== exceptId) send(p.ws, type, payload);
-  }
-}
-
-function removePlayer(ws) {
-  const code = ws.roomCode;
-  const id = ws.playerId;
-  if (!code || !rooms.has(code)) return;
-  const room = rooms.get(code);
-  room.players.delete(id);
-  if (room.players.size === 0) {
-    rooms.delete(code);
-    return;
-  }
-  if (room.hostId === id) {
-    const next = room.players.values().next().value;
-    if (next) {
-      room.hostId = next.id;
-      next.isHost = true;
-    }
-  }
-  broadcastRoom(room, "room_update", { room: roomPublic(room) });
-}
-
-function assignRoles(room) {
-  const ids = shuffle([...room.players.keys()]);
-  const n = ids.length;
-  const spyCount = computeSpyCount(n);
-  ids.forEach((pid, i) => {
-    const p = room.players.get(pid);
-    p.role = i < spyCount ? "spy" : "staff";
-    p.alive = true;
+  const publicRoom = (r) => ({
+    code: r.code,
+    hostId: r.hostId,
+    started: r.started,
+    progress: r.progress,
+    players: [...r.players.values()].map(({ ws, ...p }) => p),
   });
-}
-
-function startGame(room) {
-  if (room.started || room.players.size < 3) return false;
-  assignRoles(room);
-  room.started = true;
-  for (const [id, p] of room.players) {
-    send(p.ws, "game_start", {
-      role: p.role,
-      room: roomPublic(room),
-      yourId: id,
-    });
+  const broadcast = (r, type, payload = {}) => {
+    for (const p of r.players.values()) send(p.ws, type, payload);
+  };
+  const update = (r) => broadcast(r, "room_update", { room: publicRoom(r) });
+  function leave(ws) {
+    const r = rooms.get(ws.roomCode);
+    if (!r) return;
+    r.players.delete(ws.playerId);
+    ws.roomCode = null;
+    ws.playerId = null;
+    if (!r.players.size) {
+      rooms.delete(r.code);
+      return;
+    }
+    if (!r.players.has(r.hostId)) r.hostId = r.players.keys().next().value;
+    update(r);
   }
-  return true;
-}
-
-function staticHandler(req, res) {
-  let path = req.url?.split("?")[0] || "/";
-  if (path === "/") path = "/index.html";
-  const filePath = join(ROOT, path);
-  if (!filePath.startsWith(ROOT) || !existsSync(filePath) || statSync(filePath).isDirectory()) {
-    res.writeHead(404);
-    res.end("Not found");
-    return;
+  function add(r, ws, name) {
+    const used = new Set([...r.players.values()].map((p) => p.color));
+    let color = 0;
+    while (used.has(color)) color++;
+    const p = {
+      id: id(),
+      name: cleanName(name),
+      color,
+      x: 49 + color * 1.5,
+      y: 57,
+      ws,
+    };
+    r.players.set(p.id, p);
+    ws.roomCode = r.code;
+    ws.playerId = p.id;
+    if (!r.hostId) r.hostId = p.id;
+    send(ws, "room_joined", { yourId: p.id, room: publicRoom(r) });
+    for (const other of r.players.values())
+      if (other.id !== p.id)
+        send(other.ws, "room_update", { room: publicRoom(r) });
   }
-  const ext = extname(filePath);
-  res.writeHead(200, {
-    "Content-Type": MIME[ext] || "application/octet-stream",
-    "Cache-Control": "no-store",
-  });
-  res.end(readFileSync(filePath));
-}
-
-const httpServer = createServer(staticHandler);
-const wss = new WebSocketServer({ server: httpServer });
-
-wss.on("connection", (ws) => {
-  send(ws, "hello", { ok: true });
-
-  ws.on("message", (raw) => {
-    let msg;
+  const http = createServer((req, res) => {
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      res.writeHead(405);
+      res.end();
+      return;
+    }
+    let path;
     try {
-      msg = JSON.parse(String(raw));
+      path = decodeURIComponent(new URL(req.url, "http://localhost").pathname);
     } catch {
+      res.writeHead(400);
+      res.end();
       return;
     }
-    const type = msg.type;
-
-    if (type === "create_room") {
-      const room = createRoom(ws);
-      send(ws, "room_joined", { room: roomPublic(room), yourId: ws.playerId, created: true });
+    if (path === "/") path = "/index.html";
+    // Explicit public surface: never expose Git, server, dependency or working files.
+    if (
+      !/^\/(index\.html|manifest\.webmanifest|sw\.js|(?:css|js|img|icons)\/[a-zA-Z0-9_./-]+)$/.test(
+        path,
+      ) ||
+      path.split("/").some((s) => s === ".." || s.startsWith("."))
+    ) {
+      res.writeHead(404);
+      res.end();
       return;
     }
-
-    if (type === "join_room") {
-      const code = String(msg.code || "").toUpperCase().trim();
-      const room = rooms.get(code);
-      if (!room) {
-        send(ws, "error", { message: "Stanza non trovata. Controlla il codice." });
-        return;
-      }
-      if (room.started) {
-        send(ws, "error", { message: "Partita già iniziata. Crea una nuova stanza." });
-        return;
-      }
-      const id = genId();
-      const name = String(msg.name || "Scienziato");
-      addPlayer(room, ws, id, name, false);
-      send(ws, "room_joined", { room: roomPublic(room), yourId: id, created: false });
-      broadcastRoom(room, "room_update", { room: roomPublic(room) }, id);
-      return;
-    }
-
-    const room = rooms.get(ws.roomCode);
-    if (!room) return;
-    const player = room.players.get(ws.playerId);
-    if (!player) return;
-
-    if (type === "set_name") {
-      player.name = String(msg.name || player.name).slice(0, 24);
-      broadcastRoom(room, "room_update", { room: roomPublic(room) });
-      return;
-    }
-
-    if (type === "start_game") {
-      if (room.hostId !== ws.playerId) {
-        send(ws, "error", { message: "Solo l'host può avviare la partita." });
-        return;
-      }
-      if (!startGame(room)) {
-        send(ws, "error", { message: "Servono almeno 3 giocatori (30% spie, voti in riunione)." });
-      }
-      return;
-    }
-
-    if (!room.started) return;
-
-    if (type === "call_meeting") {
-      if (!player.alive) return;
-      if (!startMeeting(room, player.id)) {
-        send(ws, "error", { message: "Riunione non disponibile ora." });
-      }
-      return;
-    }
-
-    if (type === "cast_vote") {
-      if (!room.meeting || !player.alive) return;
-      const targetId = msg.targetId === "skip" ? "skip" : String(msg.targetId || "skip");
-      room.meeting.votes.set(player.id, targetId);
-      if (room.meeting.votes.size >= alivePlayers(room).length) {
-        resolveMeeting(room);
-      }
-      return;
-    }
-
-    if (type === "move") {
-      if (!player.alive || room.meeting) return;
-      player.x = Math.max(3, Math.min(97, Number(msg.x) || player.x));
-      player.y = Math.max(3, Math.min(97, Number(msg.y) || player.y));
-      broadcastRoom(
-        room,
-        "player_move",
-        { id: player.id, x: player.x, y: player.y },
-        player.id
-      );
-      return;
-    }
-
-    if (type === "complete_task") {
-      if (player.role !== "staff") return;
-      const taskId = String(msg.taskId || "");
-      if (!taskId) return;
-      room.completed.add(taskId);
-      broadcastRoom(room, "task_done", { taskId, completed: [...room.completed] });
-      return;
-    }
-
-    if (type === "spy_intel") {
-      if (player.role !== "spy") return;
-      const action = msg.action;
-      if (action === "steal_site" && msg.locId) {
-        if (!player.intel.stolenAt.includes(msg.locId)) player.intel.stolenAt.push(msg.locId);
-        if (msg.label) player.intel.stash.push({ place: msg.place, label: msg.label });
-      }
-      if (action === "hub" && msg.taskId) {
-        if (!player.intel.hubDone.includes(msg.taskId)) player.intel.hubDone.push(msg.taskId);
-        if (msg.label) player.intel.stash.push({ place: msg.place, label: msg.label });
-      }
-      if (action === "dispatch" && player.intel.stash.length > 0) {
-        player.intel.stash.shift();
-        player.intel.dispatch += 1;
-      }
-      send(ws, "spy_state", { intel: player.intel });
-      return;
+    const file = resolve(ROOT, "." + path);
+    try {
+      if (!file.startsWith(ROOT + sep) || !statSync(file).isFile())
+        throw Error();
+      const data = readFileSync(file);
+      res.writeHead(200, {
+        "Content-Type": MIME[extname(file)] || "application/octet-stream",
+        "Cache-Control": "no-cache",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "same-origin",
+      });
+      res.end(req.method === "HEAD" ? undefined : data);
+    } catch {
+      res.writeHead(404);
+      res.end("Not found");
     }
   });
-
-  ws.on("close", () => removePlayer(ws));
-});
-
-httpServer.listen(PORT, () => {
-  console.log(`Manhattan Project — online: http://127.0.0.1:${PORT}`);
-  console.log("Multigiocatore WebSocket sulla stessa porta.");
-});
+  const wss = new WebSocketServer({
+    server: http,
+    maxPayload: 4096,
+    verifyClient: ({ origin, req }) =>
+      !origin ||
+      origin === `http://${req.headers.host}` ||
+      origin === `https://${req.headers.host}`,
+  });
+  wss.on("error", () => {});
+  wss.on("connection", (ws) => {
+    ws.isAlive = true;
+    ws.on("pong", () => (ws.isAlive = true));
+    let windowStart = Date.now(),
+      count = 0;
+    send(ws, "hello", { version: 1 });
+    ws.on("message", (raw) => {
+      if (Date.now() - windowStart > 1000) {
+        windowStart = Date.now();
+        count = 0;
+      }
+      if (++count > 80) {
+        ws.close(1008, "Too many messages");
+        return;
+      }
+      let m;
+      try {
+        m = JSON.parse(String(raw));
+      } catch {
+        return;
+      }
+      if (!m || typeof m !== "object") return;
+      const error = (message) => send(ws, "error", { message });
+      if (m.type === "leave_room") {
+        leave(ws);
+        return;
+      }
+      if (
+        (m.type === "create_room" || m.type === "join_room") &&
+        m.name !== undefined &&
+        typeof m.name !== "string"
+      )
+        return error("Il nome deve essere un testo.");
+      if (m.type === "join_room" && typeof m.code !== "string")
+        return error("Il codice deve essere un testo.");
+      if (
+        m.type === "answer" &&
+        (typeof m.eventId !== "string" ||
+          !Number.isInteger(m.step) ||
+          !(
+            Number.isInteger(m.choice) ||
+            (Array.isArray(m.choice) &&
+              m.choice.length <= 6 &&
+              m.choice.every(Number.isInteger))
+          ))
+      )
+        return error("Risposta non valida.");
+      if (m.type === "create_room") {
+        if (rooms.size >= 100)
+          return error("Troppe stanze: riprova più tardi.");
+        leave(ws);
+        let code;
+        do {
+          code = randomBytes(3).toString("hex").toUpperCase();
+        } while (rooms.has(code));
+        const r = {
+          code,
+          hostId: null,
+          started: false,
+          progress: freshProgress(),
+          players: new Map(),
+          created: Date.now(),
+        };
+        rooms.set(code, r);
+        add(r, ws, m.name);
+        return;
+      }
+      if (m.type === "join_room") {
+        const r = rooms.get(m.code.trim().toUpperCase());
+        if (!r)
+          return error(
+            "Stanza non trovata. Controlla il codice e l’indirizzo del server.",
+          );
+        if (ws.roomCode === r.code && r.players.has(ws.playerId)) {
+          send(ws, "room_joined", { yourId: ws.playerId, room: publicRoom(r) });
+          if (r.started)
+            send(ws, "game_start", {
+              yourId: ws.playerId,
+              room: publicRoom(r),
+            });
+          return;
+        }
+        if (r.players.size >= 8)
+          return error("La stanza è piena (massimo 8 persone).");
+        leave(ws);
+        add(r, ws, m.name);
+        if (r.started)
+          send(ws, "game_start", { yourId: ws.playerId, room: publicRoom(r) });
+        return;
+      }
+      const r = rooms.get(ws.roomCode),
+        p = r?.players.get(ws.playerId);
+      if (!p) return;
+      if (m.type === "start_game") {
+        if (r.hostId !== p.id)
+          return error("Solo l’host può avviare il turno.");
+        if (r.started) return;
+        if (r.players.size < 2)
+          return error(
+            "Aspetta almeno un’altra persona. Puoi aprire una seconda scheda per provare.",
+          );
+        r.started = true;
+        for (const player of r.players.values())
+          send(player.ws, "game_start", {
+            yourId: player.id,
+            room: publicRoom(r),
+          });
+        return;
+      }
+      if (!r.started) return;
+      if (m.type === "move") {
+        if (!Number.isFinite(m.x) || !Number.isFinite(m.y)) return;
+        p.x = Math.max(5, Math.min(95, m.x));
+        p.y = Math.max(15, Math.min(88, m.y));
+        broadcast(r, "player_move", { id: p.id, x: p.x, y: p.y });
+        return;
+      }
+      if (m.type === "answer") {
+        const n = r.progress.steps[m.eventId] || 0;
+        if (m.step !== n) {
+          send(ws, "answer_result", {
+            ok: false,
+            reason: "stale",
+            progress: r.progress,
+          });
+          return;
+        }
+        const result = attempt(r.progress, m.eventId, m.choice);
+        send(ws, "answer_result", {
+          ...result,
+          progress: r.progress,
+          eventId: m.eventId,
+        });
+        if (result.ok)
+          broadcast(r, "progress", {
+            progress: r.progress,
+            eventId: m.eventId,
+            by: p.name,
+          });
+        return;
+      }
+      if (m.type === "gather") broadcast(r, "gather", { by: p.name });
+    });
+    ws.on("close", () => leave(ws));
+    ws.on("error", () => {});
+  });
+  const heartbeat = setInterval(() => {
+    for (const ws of wss.clients) {
+      if (!ws.isAlive) {
+        ws.terminate();
+        continue;
+      }
+      ws.isAlive = false;
+      ws.ping();
+    }
+    for (const r of rooms.values())
+      if (Date.now() - r.created > 6 * 3600000) {
+        for (const p of r.players.values()) p.ws.close(1000, "Session expired");
+        rooms.delete(r.code);
+      }
+  }, 30000);
+  try {
+    await new Promise((yes, no) => {
+      http.once("error", no);
+      http.listen(port, host, yes);
+    });
+  } catch (error) {
+    clearInterval(heartbeat);
+    wss.close();
+    throw error;
+  }
+  const bound = http.address().port;
+  return {
+    httpUrl: `http://127.0.0.1:${bound}`,
+    wsUrl: `ws://127.0.0.1:${bound}`,
+    close: () =>
+      new Promise((done) => {
+        clearInterval(heartbeat);
+        for (const ws of wss.clients) ws.terminate();
+        wss.close();
+        http.close(done);
+      }),
+  };
+}
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  startServer()
+    .then((server) => {
+      console.log(`Los Alamos → ${server.httpUrl}`);
+      for (const list of Object.values(networkInterfaces()))
+        for (const net of list || [])
+          if (net.family === "IPv4" && !net.internal)
+            console.log(
+              `Rete locale → http://${net.address}:${new URL(server.httpUrl).port}`,
+            );
+    })
+    .catch((error) => {
+      console.error(error.message);
+      process.exitCode = 1;
+    });
+}
