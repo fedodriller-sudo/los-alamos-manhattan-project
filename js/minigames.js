@@ -232,23 +232,25 @@ function renderMinigame(container, type, steps, onComplete, options) {
 
   const sceneId = window.MG_SCENES?.sceneForTask?.(taskId, locationId);
   if (sceneId && window.MG_SCENES?.runScene?.(wrap, sceneId, ctx, onComplete, window.MG_HELPERS)) {
+    window.MP_MISSION_UI?.decorateMinigame?.(wrap, ctx);
     return;
   }
 
   if (type === "wires") {
-    return runVisualConnect(wrap, theme, Math.min(easySteps, 3), hint, onComplete);
+    runVisualConnect(wrap, theme, Math.min(easySteps, 3), hint, onComplete);
+  } else if (type === "slider") {
+    runVisualGauge(wrap, theme, hint, onComplete);
+  } else {
+    runDragDrop(wrap, {
+      hint,
+      scene: "lab",
+      piece: "doc",
+      pieceLabel: "📋",
+      target: "glove-slot",
+      targetLabel: "Obiettivo",
+    }, onComplete);
   }
-  if (type === "slider") {
-    return runVisualGauge(wrap, theme, hint, onComplete);
-  }
-  return runDragDrop(wrap, {
-    hint,
-    scene: "lab",
-    piece: "doc",
-    pieceLabel: "📋",
-    target: "glove-slot",
-    targetLabel: "Obiettivo",
-  }, onComplete);
+  window.MP_MISSION_UI?.decorateMinigame?.(wrap, ctx);
 }
 
 function runDragDrop(wrap, cfg, onComplete) {

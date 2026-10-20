@@ -795,8 +795,8 @@
     available.forEach((task) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "task-pick-btn" + (task.oppenheimer ? " opp" : "");
-      b.textContent = (task.oppenheimer ? "★ " : "") + task.name;
+      b.className = "task-pick-btn mission-card" + (task.oppenheimer ? " opp" : "");
+      b.innerHTML = window.MP_MISSION_UI?.missionCardHtml?.(task, loc) || task.name;
       b.addEventListener("click", () => startTask(task, loc, "staff"));
       pick.appendChild(b);
     });
@@ -869,42 +869,84 @@
 
     ul.innerHTML = "";
 
+    const progressFill = document.getElementById("task-progress-fill");
+
     if (state.role === "spy") {
-      const header = document.createElement("li");
-      header.className = "spy-objective";
-      header.textContent = `Dispatch inviati: ${state.intelCount} / ${SPY_DISPATCH_WIN}`;
-      ul.appendChild(header);
+      const card = document.createElement("li");
+      card.className = "spy-objective-card";
+      card.innerHTML =
+        `<strong>Rete Mosca</strong><br>` +
+        `Dispatch: ${state.intelCount} / ${SPY_DISPATCH_WIN} · ` +
+        `Pacchetti in tasca: ${state.intelStash.length}`;
+      ul.appendChild(card);
 
-      const stash = document.createElement("li");
-      stash.className = state.intelStash.length ? "spy-stash" : "";
-      stash.textContent = `In attesa di invio: ${state.intelStash.length} pacchetti`;
-      ul.appendChild(stash);
-
-      LOCATIONS.filter((l) => l.intelSteal).forEach((loc) => {
-        const li = document.createElement("li");
-        li.className = state.stolenAt.has(loc.id) ? "done" : "";
-        li.textContent = state.stolenAt.has(loc.id)
-          ? `✓ ${loc.intelSteal}`
-          : `○ ${loc.intelSteal}`;
-        ul.appendChild(li);
+      LOCATIONS.filter((l) => l.intelSteal || l.oppenheimerHub).forEach((loc) => {
+        const block = document.createElement("li");
+        block.className = "objective-loc-block";
+        const th = window.MP_MISSION_UI?.THEME_UI?.[loc.theme] || { icon: "🕵", label: "Intel" };
+        const done = loc.intelSteal && state.stolenAt.has(loc.id);
+        block.innerHTML =
+          `<div class="objective-loc-head" style="--loc-hue:280">` +
+          `<span class="objective-loc-icon">${th.icon}</span>` +
+          `<span class="objective-loc-meta"><span class="objective-loc-name">${loc.name}</span>` +
+          `<span class="objective-loc-count">${done ? "Copiato" : "Da infiltrare"}</span></span></div>`;
+        ul.appendChild(block);
       });
 
+      if (progressFill) progressFill.style.width = `${Math.min(100, (state.intelCount / SPY_DISPATCH_WIN) * 100)}%`;
       if (critProg) critProg.textContent = "";
       if (total) total.textContent = `Spionaggio`;
       return;
     }
 
-    const tasks = allTasks();
-    tasks.forEach((t) => {
-      const li = document.createElement("li");
-      li.className = state.completed.has(t.id) ? "done" : "";
-      if (t.oppenheimer) li.classList.add("opp-task");
-      const star = t.oppenheimer ? "★ " : "";
-      li.textContent = state.completed.has(t.id) ? `✓ ${star}${t.name}` : `${star}${t.name}`;
-      ul.appendChild(li);
-    });
+    for (const loc of LOCATIONS) {
+      const locTasks = loc.tasks;
+      if (!locTasks.length) continue;
+      const done = locTasks.filter((t) => state.completed.has(t.id)).length;
+      const pending = locTasks.filter((t) => !state.completed.has(t.id));
+      if (done === locTasks.length && pending.length === 0) continue;
+
+      const th =
+        window.MP_MISSION_UI?.THEME_UI?.[loc.theme] || { icon: "⚙", label: loc.theme };
+      const hue = { plutonium: 152, director: 45, espionage: 280, explosives: 28 }[loc.theme] || 210;
+
+      const block = document.createElement("li");
+      block.className = "objective-loc-block";
+      block.innerHTML =
+        `<div class="objective-loc-head" style="--loc-hue:${hue}">` +
+        `<span class="objective-loc-icon">${th.icon}</span>` +
+        `<span class="objective-loc-meta">` +
+        `<span class="objective-loc-name">${loc.name}</span>` +
+        `<span class="objective-loc-count">${done}/${locTasks.length} completate</span>` +
+        `</span></div>` +
+        `<div class="objective-loc-bar"><span style="width:${(done / locTasks.length) * 100}%"></span></div>`;
+
+      const sub = document.createElement("ul");
+      sub.className = "objective-loc-tasks";
+      const show = pending.length ? pending.slice(0, 4) : locTasks.slice(-2);
+      show.forEach((t) => {
+        const li = document.createElement("li");
+        const isDone = state.completed.has(t.id);
+        li.className = isDone ? "done" : "pending";
+        if (t.oppenheimer) li.classList.add("opp-task");
+        const v = window.MP_MISSION_UI?.visualForTask?.(t.id, loc.id, t.theme || loc.theme);
+        const icon = v?.icon || "•";
+        li.innerHTML = `<span class="objective-task-icon">${icon}</span><span>${t.name}</span>`;
+        sub.appendChild(li);
+      });
+      if (pending.length > 4) {
+        const more = document.createElement("li");
+        more.className = "pending";
+        more.textContent = `+ altre ${pending.length - 4} missioni qui…`;
+        sub.appendChild(more);
+      }
+      block.appendChild(sub);
+      ul.appendChild(block);
+    }
 
     const critDone = CRITICAL_TASK_IDS.filter((id) => state.completed.has(id)).length;
+    const winPct = Math.min(100, (state.completed.size / WIN_TASK_COUNT) * 100);
+    if (progressFill) progressFill.style.width = `${winPct}%`;
     if (critProg) critProg.textContent = `Critici: ${critDone}/${CRITICAL_TASK_IDS.length}`;
     if (total) total.textContent = `${state.completed.size} / ${WIN_TASK_COUNT}`;
   }

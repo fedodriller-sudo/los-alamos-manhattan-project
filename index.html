@@ -2,7 +2,14 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#141a24" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Los Alamos" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
   <title>Manhattan Project — Los Alamos</title>
   <link rel="stylesheet" href="css/game.css" />
   <link rel="stylesheet" href="css/minigames.css" />
@@ -10,6 +17,7 @@
   <link rel="stylesheet" href="css/mission-lab.css" />
   <link rel="stylesheet" href="css/detailed-missions.css" />
   <link rel="stylesheet" href="css/location-games.css" />
+  <link rel="stylesheet" href="css/product-design.css" />
 </head>
 <body>
   <div id="file-warning" class="file-warning hidden">
@@ -29,6 +37,18 @@
       <button type="button" id="btn-resume" class="btn primary">Continua la partita</button>
       <p id="resume-summary" class="note resume-summary"></p>
       <button type="button" id="btn-discard-save" class="btn small">Inizia da capo (cancella salvataggio)</button>
+    </div>
+    <div id="pwa-install-banner" class="pwa-install-banner hidden">
+      <p class="pwa-install-text">
+        <strong>Product Design</strong> è incluso nel gioco. Installa l’app per aprirlo a schermo intero (offline dopo il primo caricamento).
+      </p>
+      <div class="pwa-install-actions">
+        <button type="button" id="btn-pwa-install" class="btn primary small">Installa app</button>
+        <button type="button" id="btn-pwa-dismiss" class="btn small">Più tardi</button>
+      </div>
+      <p id="pwa-ios-hint" class="pwa-ios-hint hidden">
+        Su iPhone/iPad: tasto <strong>Condividi</strong> → <strong>Aggiungi a Home</strong>.
+      </p>
     </div>
     <p class="role-prompt">Scegli il ruolo per una nuova partita</p>
     <div class="role-buttons">
@@ -91,7 +111,12 @@
 
     <div class="layout map-layout">
       <aside class="task-panel task-panel-side">
-        <h2>Obiettivi</h2>
+        <div class="task-panel-header">
+          <h2>Dossier obiettivi</h2>
+          <div class="task-progress-ring" aria-hidden="true">
+            <div id="task-progress-fill" class="task-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
         <ul id="task-list"></ul>
       </aside>
 
@@ -163,6 +188,7 @@
       document.getElementById("file-warning").classList.remove("hidden");
     }
   </script>
+  <script src="js/pwa-install.js"></script>
   <script src="js/tasks-data.js"></script>
   <script src="js/map-road.js"></script>
   <script src="js/detailed-missions.js"></script>
@@ -170,6 +196,7 @@
   <script src="js/save.js"></script>
   <script src="js/spy-investigation.js"></script>
   <script src="js/minigame-scenes.js"></script>
+  <script src="js/mission-ui.js"></script>
   <script src="js/minigames.js"></script>
   <script src="js/task-scene-fill.js"></script>
   <script src="js/net-client.js"></script>

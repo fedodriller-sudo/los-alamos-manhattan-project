@@ -1,0 +1,325 @@
+/* Product design — obiettivi e minigiochi (Project Y dossier) */
+
+:root {
+  --pd-radius: 12px;
+  --pd-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --pd-paper: rgba(22, 28, 40, 0.92);
+  --pd-ink: #f0ebe3;
+  --pd-muted: #9a9488;
+  --pd-gold: #c9a227;
+  --pd-green: #3dd68c;
+}
+
+.task-panel-side {
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.task-panel-header {
+  padding: 0.85rem 1rem;
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.15), transparent);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.task-panel-header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pd-gold);
+}
+
+.task-progress-ring {
+  margin-top: 0.5rem;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.task-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pd-green), #2a9a68);
+  border-radius: 3px;
+  transition: width 0.35s ease;
+}
+
+#task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.65rem 0.75rem;
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.objective-loc-block {
+  margin-bottom: 0.65rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.objective-loc-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pd-ink);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.objective-loc-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  background: hsl(var(--loc-hue, 210) 35% 28%);
+  border: 1px solid hsl(var(--loc-hue, 210) 45% 42%);
+}
+
+.objective-loc-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.objective-loc-name {
+  display: block;
+  line-height: 1.2;
+}
+
+.objective-loc-count {
+  font-size: 0.65rem;
+  color: var(--pd-muted);
+  font-weight: 500;
+}
+
+.objective-loc-bar {
+  height: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  margin: 0 0.55rem 0.35rem;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.objective-loc-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--pd-green);
+  opacity: 0.85;
+}
+
+.objective-loc-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0.4rem 0.4rem;
+}
+
+.objective-loc-tasks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.28rem 0.35rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--pd-muted);
+  border-radius: 6px;
+}
+
+.objective-loc-tasks li.pending {
+  color: var(--pd-ink);
+  background: rgba(201, 162, 39, 0.06);
+}
+
+.objective-loc-tasks li.done {
+  color: var(--pd-green);
+  opacity: 0.75;
+}
+
+.objective-task-icon {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.objective-loc-tasks li.opp-task .objective-task-icon {
+  color: var(--pd-gold);
+}
+
+/* Mission picker cards */
+.task-pick-btn.mission-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--pd-radius);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(30, 40, 56, 0.95), rgba(18, 24, 34, 0.98));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.task-pick-btn.mission-card:hover {
+  transform: translateY(-2px);
+  border-color: hsl(var(--card-hue, 45) 55% 50%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mission-card-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  background: hsl(var(--card-hue, 210) 40% 32%);
+  border: 1px solid hsl(var(--card-hue, 210) 50% 48%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.mission-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mission-card-type {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--card-hue, 210) 70% 72%);
+  font-weight: 600;
+}
+
+.mission-card-crit {
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(201, 162, 39, 0.25);
+  color: var(--pd-gold);
+  font-size: 0.6rem;
+  vertical-align: middle;
+}
+
+.mission-card-name {
+  font-size: 0.88rem;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.task-pick-btn.mission-card.opp {
+  border-color: rgba(201, 162, 39, 0.45);
+  background: linear-gradient(135deg, rgba(60, 48, 20, 0.5), rgba(18, 24, 34, 0.98));
+}
+
+/* Minigame product shell */
+.mg-product-shell {
+  --mg-accent: hsl(var(--mg-accent-hue, 210) 55% 55%);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--pd-paper);
+  box-shadow: var(--pd-shadow);
+  overflow: hidden;
+}
+
+.mg-product-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  background: linear-gradient(90deg, hsl(var(--mg-accent-hue, 210) 25% 22%), rgba(0, 0, 0, 0.2));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mg-product-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: hsl(var(--mg-accent-hue, 210) 45% 35%);
+  border: 1px solid hsl(var(--mg-accent-hue, 210) 55% 50%);
+}
+
+.mg-product-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.mg-product-type {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mg-accent);
+  font-weight: 700;
+}
+
+.mg-product-scene {
+  font-size: 0.65rem;
+  color: var(--pd-muted);
+  text-transform: capitalize;
+}
+
+.mg-product-body {
+  padding: 0.85rem 0.9rem 1rem;
+}
+
+.mg-product-body .mg-hint {
+  margin-top: 0;
+}
+
+/* PWA install (menu) */
+.pwa-install-banner {
+  max-width: 28rem;
+  margin: 1rem auto 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--pd-radius);
+  background: var(--pd-paper);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  box-shadow: var(--pd-shadow);
+  text-align: left;
+}
+
+.pwa-install-text {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--pd-ink);
+}
+
+.pwa-install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pwa-ios-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  color: var(--pd-muted);
+}
+
+/* Spy objectives panel */
+.spy-objective-card {
+  padding: 0.65rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.25), rgba(18, 12, 28, 0.6));
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  font-size: 0.8rem;
+}
