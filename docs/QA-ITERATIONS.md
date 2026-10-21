@@ -39,3 +39,13 @@
 - Eight participants admitted; ninth rejected; departed participant frees a seat.
 - Switching rooms preserves independent progress and transfers the old room's host role correctly.
 - No production change needed for these cases.
+
+## Six-hour window closed — 2026-10-21 03:22 Europe/Rome
+- Scheduled window ended at03:21; final scheduler check ran at03:22.
+- Application commit23a0666 remains unchanged, with a clean worktree and matching PR head.
+- PR1 remains OPEN/DRAFT. All push and PR CI checks succeeded on Node20,22,24, including the11-test suite.
+- Every periodic preview health check returned HTTP200, including the final check. No regression was observed during monitoring; unchanged code was not repeatedly reworked or retested locally.
+- Delivered scope: night cartoon UI, eight sourced historical episodes, two workbench interactions, cooperative localhost/LAN rooms for2–8 players, solo persistence, offline exploration, adjustable audio/motion, source notes and QA evidence.
+- Historical facts and fictional adaptations remain explicitly distinguished; source and editorial notes are in docs/HISTORY.md. No additional historical claims were introduced during monitoring.
+- Remaining limits: no physical-phone or separate-device LAN test; no exhaustive legacy-cache upgrade or cancellation-timing matrix; the map is artistic rather than collision-accurate historical geography; two avatar illustrations.
+- No merge or deployment performed. Scheduled monitor disabled after recording this closeout; the local preview server is left available.
