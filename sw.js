@@ -1,4 +1,4 @@
-const CACHE_NAME = "los-alamos-nightshift-v1";
+const CACHE_NAME = "los-alamos-nightshift-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,9 @@ const ASSETS = [
   "./js/nightshift.js",
   "./js/history-data.js",
   "./js/progress.js",
+  "./js/peer-room.js",
+  "./js/peer-session.js",
+  "./js/peer-signaling.js",
   "./img/campus-night.png",
   "./img/scientist-chibi.png",
   "./img/researcher-chibi.png",

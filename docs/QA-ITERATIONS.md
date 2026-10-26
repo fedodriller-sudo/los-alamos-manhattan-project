@@ -49,3 +49,15 @@
 - Historical facts and fictional adaptations remain explicitly distinguished; source and editorial notes are in docs/HISTORY.md. No additional historical claims were introduced during monitoring.
 - Remaining limits: no physical-phone or separate-device LAN test; no exhaustive legacy-cache upgrade or cancellation-timing matrix; the map is artistic rather than collision-accurate historical geography; two avatar illustrations.
 - No merge or deployment performed. Scheduled monitor disabled after recording this closeout; the local preview server is left available.
+
+## 2026-10-26 — Browser host and animated scene
+
+- Replaced active WebSocket client with native WebRTC DataChannels. Browser host uses the same historical progress rules; 2–8 seats, identity validation, duplicate-step protection and late join remain.
+- No external signaling or ICE service: distinct complete-ICE offer/answer per guest, copy/paste exchange, cancellation of pending invites. Host tab must remain open; no automatic host migration.
+- Added patrolling decorative colleagues, night motes, breathing/stride animation, dialog entrances and click-to-walk; reduced motion remains respected. Historical source content unchanged.
+- Independent review found and fixed free-walk target crash, Unicode signaling and exhausted pending invites. Added signaling regression tests.
+- Two real browser tabs connected, both received game start without a game server. Final visual/shared-answer proof recorded below after final checks.
+- Pages API returned 404 with contributor account (`push=true`, `admin=false`, `maintain=false`): owner activation required. No merge performed.
+
+- Final local checks: 17/17 tests pass; syntax checks and static build pass. Real-browser proof includes Unicode guest name, synchronized free walking, host first answer and guest second answer, both diaries at 1/8, no console errors. NPC transform samples changed across observations, confirming ongoing animation. Screenshot: `docs/screenshots/browser-host-animated.jpg`.
+- Owner enabled Pages with GitHub Actions and agreed to allow the feature branch in the github-pages deployment environment. Added gated publish workflow; live result pending first run.

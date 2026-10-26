@@ -2,31 +2,31 @@
 
 Un piccolo gioco browser in italiano: esplora una Los Alamos cartoon notturna e attraversa otto episodi ispirati alla vita del laboratorio tra il 1943 e il 1945. Facile, senza timer o penalità. Da soli oppure in cooperativa locale da **2 a 8 persone**.
 
-## Avvio
+## Gioca dal browser
 
-Richiede **Node.js 20 o successivo**.
+La versione attuale è statica: singolo e cooperativa WebRTC funzionano su GitHub Pages, senza Node sul computer dei giocatori. Il workflow **Publish browser game** esegue test, crea il pacchetto pubblico e pubblica con GitHub Actions dai rami `codex/los-alamos-nightshift` e `main`. Il proprietario ha attivato Pages con sorgente GitHub Actions.
+
+### Cooperativa LAN (2–8)
+
+1. Tutti aprono il sito HTTPS sulla stessa rete. L’host sceglie **Gioca con gli amici → Crea una stanza**.
+2. L’host genera un invito distinto per ciascun collega e lo condivide privatamente.
+3. Il collega apre il link oppure lo incolla nel campo invito, inserisce il nome e preme **Entra**. Copia la risposta mostrata e la restituisce all’host.
+4. L’host incolla la risposta e preme **Collega il collega**, poi avvia il turno quando sono presenti almeno due persone.
+
+Gli inviti non collegati possono essere annullati senza espellere i presenti. Non servono account, server di gioco, signaling, STUN o TURN. La connessione avviene direttamente fra browser tramite DataChannel WebRTC. L’host verifica risposte e progressi. Una persona può entrare anche dopo l’avvio.
+
+**L’host deve tenere aperta la scheda**: se la chiude la partita termina, senza trasferimento automatico. I progressi cooperativi restano in memoria; il diario singolo salvato non viene sovrascritto. Reti ospiti con isolamento dei dispositivi, firewall o browser che impediscono WebRTC possono bloccare il collegamento. Il test eseguito usa due schede reali sullo stesso computer; non certifica ogni router LAN o browser mobile. Gli inviti contengono dati di collegamento: condividili solo con i partecipanti.
+
+### Anteprima e build
 
 ```sh
-npm --prefix server install
-npm start
+npm run build
+python3 -m http.server 8877 --bind 127.0.0.1 --directory dist
 ```
 
-Apri **http://localhost:8765**. Il server mostra anche gli indirizzi della rete locale. Una sola applicazione serve sito e WebSocket sulla stessa porta; non servono account o servizi esterni.
+Apri http://localhost:8877. Node 20+ è necessario solo per build e test; Python è un’opzione per servire l’anteprima statica. Il pacchetto `dist` contiene esclusivamente gli asset pubblici. I percorsi relativi supportano la sottocartella del repository su Pages.
 
-Per cambiare porta: `PORT=8877 npm start`. Per limitare l'accesso al computer host: `HOST=127.0.0.1 npm start`.
-
-### Cooperativa sullo stesso computer
-
-1. Apri il sito in due schede.
-2. Scegli **Gioca con gli amici**, inserisci un nome e crea una stanza.
-3. Nell'altra scheda, entra con il codice di sei caratteri (o il link d'invito).
-4. L'host avvia quando sono presenti almeno due persone.
-
-### Cooperativa tra dispositivi sulla stessa rete
-
-Tutti aprono l'indirizzo LAN mostrato dal server, ad esempio `http://192.168.1.10:8765`. Non usare `localhost` sugli altri dispositivi: indica il dispositivo stesso. Condividi codice o link generato usando l'indirizzo LAN. Il firewall dell'host deve permettere le connessioni alla porta scelta.
-
-I progressi sono condivisi e verificati dal server. Due risposte simultanee allo stesso passaggio non lo completano due volte. Le persone possono raggiungere una partita già iniziata. Se l'host esce, il ruolo passa a chi resta. Dopo una disconnessione, rientra con il codice: ritroverai i progressi finché almeno una persona è rimasta collegata. Non è un servizio online ospitato: il computer server deve restare acceso.
+Il vecchio server Node è conservato per consultazione e test di regressione, ma la nuova interfaccia non usa WebSocket e il server non viene pubblicato.
 
 ## Come si gioca
 
@@ -37,9 +37,9 @@ I progressi sono condivisi e verificati dal server. Due risposte simultanee allo
 - Nel **Diario** trovi fatti documentati, fonti e limiti della ricostruzione.
 - Nelle **Impostazioni** regoli suoni, volume e movimento ridotto. Il sistema rispetta anche `prefers-reduced-motion`.
 
-Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Il salvataggio locale singolo resta separato dalle stanze cooperative. Le stanze sono in memoria e scompaiono quando tutti escono o dopo sei ore. Riavviare il server azzera le stanze.
+Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Su HTTPS/localhost il service worker conserva gli asset per l’esplorazione offline dopo il primo caricamento. Il collegamento cooperativo richiede che il browser host resti raggiungibile.
 
-La modalità singola può anche usare `python3 serve.py` (senza multiplayer). Su HTTPS/localhost, il service worker conserva gli asset per l'esplorazione offline dopo il primo caricamento. Il multiplayer richiede sempre una connessione al computer host. La disponibilità offline dipende dal browser; l'installazione usa il suo menu di installazione app.
+Il campus comprende colleghi in movimento, particelle notturne, animazioni di respiro e camminata, transizioni e movimento libero con un tocco. Le animazioni decorative si disattivano con movimento ridotto. Gli NPC sono comparse artistiche, senza attribuzioni a persone storiche.
 
 ## Accuratezza storica
 
@@ -71,4 +71,3 @@ I moduli della precedente versione sono conservati per consultazione, ma non ven
 
 Le illustrazioni originali in `img/campus-night.png`, `img/scientist-chibi.png` e `img/researcher-chibi.png` sono generate per questa revisione. Non sono fotografie o documenti storici. Nessuna dipendenza grafica esterna viene caricata dal browser.
 
-Questo server è pensato per sessioni fidate in localhost/LAN, senza account; non include autenticazione o ripristino persistente delle stanze e non è configurato come servizio pubblico Internet. GitHub Pages può ospitare la parte singola, non il server multiplayer.

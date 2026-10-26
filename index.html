@@ -181,13 +181,13 @@
           <button id="create-button" type="button" class="button gold full">
             Crea una stanza
           </button>
-          <div class="or">oppure entra con un codice</div>
+          <div class="or">oppure incolla l’invito dell’host</div>
           <div class="join-row">
             <input
               id="room-code"
-              aria-label="Codice stanza"
-              placeholder="ABC123"
-              maxlength="6"
+              aria-label="Invito dell’host"
+              placeholder="Incolla il link di invito"
+              maxlength="50000"
               autocomplete="off"
               autocapitalize="characters"
             /><button id="join-button" type="submit" class="button">
@@ -198,31 +198,44 @@
       </form>
       <p id="connection-status" class="connection-status" role="status"></p>
       <div id="lobby-waiting" hidden>
-        <p class="eyebrow">CODICE STANZA</p>
+        <p class="eyebrow">SQUADRA LAN</p>
         <div class="code-line">
           <strong id="code-display"></strong
-          ><button id="copy-invite" class="button small">Copia invito</button>
+          ><button id="copy-invite" class="button small">Genera invito</button>
         </div>
+        <button id="cancel-invites" class="text-button">
+          Annulla inviti non collegati
+        </button>
         <ul id="roster" class="roster"></ul>
         <button id="start-button" class="button gold full">
           Avvia il turno
         </button>
         <p id="host-help" class="subtle"></p>
       </div>
+      <label for="signal-output">Invito o risposta da condividere</label>
+      <textarea
+        id="signal-output"
+        readonly
+        rows="3"
+        aria-label="Invito o risposta da condividere"
+      ></textarea>
+      <label for="signal-input">Host: incolla la risposta del collega</label>
+      <textarea id="signal-input" rows="3" maxlength="50000"></textarea>
+      <button id="accept-answer" class="button small">
+        Collega il collega
+      </button>
       <details class="local-help">
-        <summary>Come collegarsi in locale</summary>
+        <summary>Come giocare senza server</summary>
         <p>
-          Sullo stesso computer apri due schede di questo sito. Sugli altri
-          dispositivi della stessa rete apri l’indirizzo LAN mostrato dal server
-          e usa il codice stanza.
+          1. L’host crea la stanza e genera un invito diverso per ogni collega.
+          2. Il collega incolla l’invito e preme Entra, poi restituisce la
+          risposta. 3. L’host incolla la risposta e collega il collega.
         </p>
         <p>
-          Avvio dalla cartella del progetto:
-          <code>npm --prefix server install</code>, poi <code>npm start</code>.
-        </p>
-        <p>
-          Nessun account o servizio esterno. Le stanze restano nella memoria del
-          computer host.
+          Restate sulla stessa rete LAN e tenete aperta la scheda dell’host.
+          Nessun account, server di gioco o servizio di collegamento. Alcune
+          reti ospiti isolano i dispositivi e impediscono la connessione. La
+          chiusura dell’host termina la partita.
         </p>
       </details>
     </dialog>

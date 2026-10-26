@@ -1,3 +1,4 @@
+import { PeerSession } from "./peer-session.js";
 import { CHAPTERS, EVENTS, PLACES } from "./history-data.js";
 import {
   freshProgress,
@@ -325,7 +326,9 @@ function render() {
     ? "Squadra cooperativa"
     : "In solitaria";
   $("room-label").textContent =
-    online && room ? "SALA " + room.code : "TURNO PERSONALE";
+    online && room
+      ? "SQUADRA · " + room.players.length + "/8"
+      : "TURNO PERSONALE";
   $("invite-button").hidden = !online;
   $("gather-button").hidden = !online;
   $("presence").textContent =
@@ -428,7 +431,7 @@ function updateNearby() {
   if (!playing) return;
   const n = nearestEvent();
   const near = n && distance(n.p) < 12;
-  $("nearby-name").textContent = target
+  $("nearby-name").textContent = target?.eventId
     ? "Verso " +
       PLACES.find(
         (p) => p.id === EVENTS.find((e) => e.id === target.eventId).place,
@@ -438,7 +441,7 @@ function updateNearby() {
       : completedCount(progress) === EVENTS.length
         ? "Tutte le storie nel diario"
         : "Scegli una storia nel dossier";
-  $("interact-button").textContent = target
+  $("interact-button").textContent = target?.eventId
     ? "In cammino…"
     : near
       ? "Interagisci [E]"
@@ -447,7 +450,7 @@ function updateNearby() {
         : "Prossimo episodio";
 }
 $("interact-button").onclick = () => {
-  if (target) {
+  if (target?.eventId) {
     const e = EVENTS.find((e) => e.id === target.eventId);
     player.x = target.x;
     player.y = target.y;
@@ -742,75 +745,14 @@ function disconnect() {
   room = null;
   yourId = null;
 }
-function connect() {
-  if (ws?.readyState === 1) return Promise.resolve();
-  if (connecting) return connecting;
-  connecting = new Promise((yes, no) => {
-    const socket = new WebSocket(
-      (location.protocol === "https:" ? "wss://" : "ws://") + location.host,
-    );
-    ws = socket;
-    let opened = false;
-    const timer = setTimeout(() => {
-      socket.close();
-      no(
-        new Error(
-          "Server multiplayer non raggiungibile. Avvia il server Node, poi riprova.",
-        ),
-      );
-    }, 4000);
-    socket.onopen = () => {
-      clearTimeout(timer);
-      opened = true;
-      yes();
-    };
-    socket.onerror = () => {
-      clearTimeout(timer);
-      no(
-        new Error(
-          "Connessione fallita. Usa il server multiplayer per creare una stanza.",
-        ),
-      );
-    };
-    socket.onclose = () => {
-      clearTimeout(timer);
-      if (!opened) no(new Error("Connessione chiusa prima del collegamento."));
-      if (ws !== socket) return;
-      ws = null;
-      connecting = null;
-      pending = false;
-      renderEvent();
-      if (online && playing) {
-        toast(
-          "Connessione persa. Rientra con lo stesso codice per ritrovare i progressi della stanza.",
-        );
-        $("connection-status").textContent =
-          "Connessione persa. Rientra nella stanza " + (room?.code || "") + ".";
-        $("room-code").value = room?.code || "";
-        $("lobby-entry").hidden = false;
-        $("lobby-waiting").hidden = true;
-        show("lobby-dialog");
-      } else if (!opened)
-        no(new Error("Server multiplayer non raggiungibile."));
-    };
-    socket.onmessage = (ev) => {
-      if (ws !== socket) return;
-      let m;
-      try {
-        m = JSON.parse(ev.data);
-      } catch {
-        return;
-      }
-      receive(m);
-    };
-  }).finally(() => (connecting = null));
-  return connecting;
-}
 function renderLobby() {
   if (!room) return;
   $("lobby-entry").hidden = true;
   $("lobby-waiting").hidden = false;
-  $("code-display").textContent = room.code;
+  $("code-display").textContent = room.players.length + " / 8 ricercatori";
+  $("copy-invite").hidden = room.hostId !== yourId;
+  $("cancel-invites").hidden = room.hostId !== yourId;
+  $("accept-answer").hidden = room.hostId !== yourId;
   $("roster").replaceChildren();
   for (const p of room.players) {
     const li = el("li", "", p.name + (p.id === yourId ? " · tu" : ""));
@@ -844,7 +786,8 @@ function receive(m) {
     online = true;
     progress = restoreProgress(room.progress);
     renderLobby();
-    $("connection-status").textContent = "Collegato al server locale.";
+    $("connection-status").textContent =
+      "Collegato direttamente al browser host.";
     return;
   }
   if (m.type === "room_update") {
@@ -906,65 +849,82 @@ function receive(m) {
         " richiama il gruppo alla sala riunioni. Potete raggiungerla sulla mappa.",
     );
 }
-async function enterRoom(create) {
-  $("connection-status").textContent = "Collegamento al laboratorio…";
-  $("create-button").disabled = true;
-  $("join-button").disabled = true;
+function newSession() {
+  disconnect();
+  const session = new PeerSession($("player-name").value, receive, () => {
+    clearTimeout(answerTimer);
+    pending = false;
+    renderEvent();
+    toast("L’host si è scollegato. Chiedi un nuovo invito per ricominciare.");
+    $("connection-status").textContent =
+      "Collegamento chiuso. Crea o accetta un nuovo invito.";
+  });
+  ws = session;
+  return session;
+}
+async function signalAction(action) {
   try {
-    await connect();
-    send(
-      create ? "create_room" : "join_room",
-      create
-        ? { name: $("player-name").value }
-        : { name: $("player-name").value, code: $("room-code").value },
-    );
+    $("connection-status").textContent = "Preparazione collegamento…";
+    await action();
   } catch (e) {
     $("connection-status").textContent = e.message;
-  } finally {
-    $("create-button").disabled = false;
-    $("join-button").disabled = false;
   }
 }
 $("coop-button").onclick = () => {
-  $("connection-status").textContent = "";
   $("player-name").disabled = false;
   $("lobby-entry").hidden = false;
   $("lobby-waiting").hidden = true;
   show("lobby-dialog");
 };
-$("create-button").onclick = () => enterRoom(true);
+$("create-button").onclick = () => {
+  newSession().host();
+  $("connection-status").textContent =
+    "Stanza creata. Genera un invito per ogni collega.";
+};
 $("lobby-form").onsubmit = (e) => {
   e.preventDefault();
-  if (!/^[a-f0-9]{6}$/i.test($("room-code").value.trim())) {
+  signalAction(async () => {
+    const session = newSession();
+    const answer = await session.join($("room-code").value);
+    $("signal-output").value = answer;
     $("connection-status").textContent =
-      "Inserisci il codice di 6 caratteri della stanza.";
-    return;
-  }
-  enterRoom(false);
+      "Invia questa risposta all’host e attendi il collegamento.";
+  });
 };
-$("start-button").onclick = () => send("start_game");
-function inviteText() {
-  const url = new URL(location.href);
-  url.search = "";
-  url.hash = "";
-  url.searchParams.set("room", room.code);
-  return url.href;
-}
+$("accept-answer").onclick = () =>
+  signalAction(async () => {
+    await ws.accept($("signal-input").value);
+    $("connection-status").textContent =
+      "Risposta accettata. Collegamento in corso…";
+  });
+$("start-button").onclick = () => {
+  if (room?.started) begin();
+  else send("start_game");
+};
 async function copyInvite() {
-  if (!room) return;
-  try {
-    await navigator.clipboard.writeText(inviteText());
-    toast(
-      "Invito copiato. Su altri dispositivi usa l’indirizzo LAN dell’host.",
-    );
-  } catch {
-    toast(
-      "Codice stanza: " + room.code + ". Condividi anche l’indirizzo del sito.",
-    );
-  }
+  await signalAction(async () => {
+    const token = await ws.invite();
+    const url = new URL(location.href);
+    url.search = "";
+    url.hash = "join=" + token;
+    $("signal-output").value = url.href;
+    $("connection-status").textContent =
+      "Invito pronto. Copialo e invialo a una sola persona; poi incolla qui la sua risposta.";
+    try {
+      await navigator.clipboard.writeText(url.href);
+    } catch {
+      /* Text remains selectable. */
+    }
+  });
 }
+$("cancel-invites").onclick = () => {
+  ws?.cancelInvites();
+  $("signal-output").value = "";
+  $("connection-status").textContent =
+    "Inviti pendenti annullati. I colleghi già collegati restano in partita.";
+};
 $("copy-invite").onclick = copyInvite;
-$("invite-button").onclick = copyInvite;
+$("invite-button").onclick = () => show("lobby-dialog");
 $("gather-button").onclick = () => {
   send("gather");
   sound();
@@ -1022,7 +982,7 @@ function frame(time) {
       if (Math.hypot(dx, dy) < 0.8) {
         const e = EVENTS.find((e) => e.id === target.eventId);
         target = null;
-        openEvent(e);
+        if (e) openEvent(e);
         dx = dy = 0;
       }
     }
@@ -1050,16 +1010,45 @@ function frame(time) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-const invite = new URL(location.href).searchParams.get("room");
-if (invite && /^[A-F0-9]{6}$/i.test(invite)) {
-  $("room-code").value = invite.toUpperCase();
+const invite = location.hash.startsWith("#join=")
+  ? location.hash.slice(6)
+  : null;
+if (invite) {
+  $("room-code").value = invite;
   show("lobby-dialog");
 }
-if (location.protocol === "file:")
-  toast(
-    "Avvia il gioco via server locale: aprire il file direttamente non è supportato.",
-  );
-// Offline exploration is available on secure origins. Multiplayer still needs the host.
-if ("serviceWorker" in navigator && window.isSecureContext) {
+if ("serviceWorker" in navigator && window.isSecureContext)
   navigator.serviceWorker.register("./sw.js").catch(() => {});
+// Animated scenery stays decorative; historical episodes remain unchanged.
+const scenery = document.createElement("div");
+scenery.className = "living-campus";
+scenery.setAttribute("aria-hidden", "true");
+for (let i = 0; i < 22; i++) {
+  const star = document.createElement("i");
+  star.className = "night-mote";
+  star.style.cssText = `--x:${(i * 37) % 100}%;--y:${(i * 23) % 95}%;--delay:${-i * 0.73}s;--duration:${5 + (i % 5)}s`;
+  scenery.append(star);
 }
+for (let i = 0; i < 3; i++) {
+  const npc = document.createElement("div");
+  npc.className = "campus-colleague colleague-" + i;
+  const img = document.createElement("img");
+  img.src = i % 2 ? "./img/researcher-chibi.png" : "./img/scientist-chibi.png";
+  img.alt = "";
+  npc.append(img);
+  scenery.append(npc);
+}
+document.querySelector(".campus").append(scenery);
+document.querySelector(".campus").addEventListener("click", (e) => {
+  if (
+    e.target.closest("button") ||
+    !playing ||
+    document.querySelector("dialog[open]")
+  )
+    return;
+  const r = e.currentTarget.getBoundingClientRect();
+  target = {
+    x: Math.max(5, Math.min(95, ((e.clientX - r.left) / r.width) * 100)),
+    y: Math.max(15, Math.min(88, ((e.clientY - r.top) / r.height) * 100)),
+  };
+});
