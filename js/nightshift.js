@@ -862,14 +862,43 @@ function newSession() {
   ws = session;
   return session;
 }
+let signalingBusy = false;
 async function signalAction(action) {
+  if (signalingBusy) return;
+  signalingBusy = true;
+  const buttons = [
+    "create-button",
+    "join-button",
+    "copy-invite",
+    "accept-answer",
+  ];
+  for (const id of buttons) $(id).disabled = true;
   try {
+    $("signal-output").value = "";
     $("connection-status").textContent = "Preparazione collegamento…";
     await action();
   } catch (e) {
     $("connection-status").textContent = e.message;
+  } finally {
+    signalingBusy = false;
+    for (const id of buttons) $(id).disabled = false;
   }
 }
+$("copy-signal").onclick = async () => {
+  const output = $("signal-output");
+  if (!output.value) {
+    toast("Genera prima un invito o una risposta.");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(output.value);
+    toast("Copiato. Condividilo con il collega.");
+  } catch {
+    output.focus();
+    output.select();
+    toast("Testo selezionato: copialo e condividilo con il collega.");
+  }
+};
 $("coop-button").onclick = () => {
   $("player-name").disabled = false;
   $("lobby-entry").hidden = false;

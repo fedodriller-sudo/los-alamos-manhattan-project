@@ -61,3 +61,5 @@
 
 - Final local checks: 17/17 tests pass; syntax checks and static build pass. Real-browser proof includes Unicode guest name, synchronized free walking, host first answer and guest second answer, both diaries at 1/8, no console errors. NPC transform samples changed across observations, confirming ongoing animation. Screenshot: `docs/screenshots/browser-host-animated.jpg`.
 - Owner enabled Pages with GitHub Actions and agreed to allow the feature branch in the github-pages deployment environment. Added gated publish workflow; live result pending first run.
+- Public deployment succeeded via Actions run 40388493709: https://fedodriller-sudo.github.io/los-alamos-manhattan-project/ . Two tabs on this HTTPS origin completed offer/answer and reached the same two-player game. All images loaded, three animated colleagues present, no browser console errors. A narrow 562×988 viewport also rendered the map and episode controls without clipping.
+- Added explicit copy control for invitation/answer and disabled concurrent signaling actions to prevent copying an obsolete output during ICE preparation.

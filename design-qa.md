@@ -56,3 +56,11 @@ The reference and desktop implementation were opened together in one comparison 
 - Only two avatar illustrations are supplied, distinguished further by names and color markers.
 
 No actionable P0/P1/P2 findings remain in the tested scope. GitHub CI execution is tracked separately from visual QA.
+
+## 26 ottobre 2026 — Scena animata e browser host
+
+Mantenuta la direzione cartoon notturna. Aggiunte comparse animate, respiro/camminata, particelle e movimento libero con un tocco, rispettando movimento ridotto. Nella precedente anteprima era attiva la preferenza di animazioni ridotte: disattivata durante la prova esplicita del movimento.
+
+La cooperativa pubblica è ora WebRTC LAN senza server di gioco: invito univoco → risposta del collega → conferma host. Il flusso espone il requisito di tenere aperto l’host e il limite delle reti isolate. Inviti pendenti annullabili, testo copiabile e azioni asincrone protette da doppi clic.
+
+Verifiche: due schede reali locali con progressi e movimento condivisi; due schede dalla versione GitHub Pages collegate e avviate; immagini tutte caricate e nessun errore console. Layout pubblico a 562×988 verificato. Nessuna prova su dispositivi fisici distinti o su tutte le configurazioni LAN. Contenuti storici invariati.
