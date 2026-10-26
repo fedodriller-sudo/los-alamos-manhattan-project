@@ -78,5 +78,5 @@
 ### 27 ottobre — PeerJS + rifinitura UI
 - Collegamento automatico con unico link stanza e QR locale (PeerJS 1.5.5, QRCode 1.5.4 vendorizzati, licenze incluse). Indicazione Wi-Fi/hotspot e Internet visibile nella lobby.
 - Tre schede reali collegate tramite lo stesso invito: squadre, avvio, intera missione Rosenberg e conteggi verificati. Rientro tardivo e uscita host verificati. Layout 390px e desktop controllati.
-- Corretti salvataggio solo dopo perdita host, canali tardivi, posti tecnici bloccati da connessioni mai aperte, messaggio di ripristino broker. Test di regressione RED→GREEN, suite 40/40, check/build riusciti.
+- Corretti salvataggio solo dopo perdita host, canali tardivi, posti tecnici bloccati da connessioni mai aperte, messaggio di ripristino broker. Test di regressione RED→GREEN, suite 41/41, check/build riusciti.
 - Pubblicazione del lotto in corso sul ramo esistente; nessun merge. Nessun test su hardware/reti fisiche distinti. Revisioni aggiuntive già registrate dal coordinamento per il lotto successivo.

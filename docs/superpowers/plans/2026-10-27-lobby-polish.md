@@ -18,4 +18,4 @@ Late asynchronous callbacks after cancellation/close or another attempt; host br
 - Final review: independent Astra; two Important findings fixed with RED→GREEN tests (host-loss diary isolation; late channel after cancellation).
 - Separate authorized multiplayer review: unopened channel timeout leaked technical slots under real PeerJS close semantics. Regression reproduced 15 retained slots; cleanup fixed, test GREEN.
 - Guest stale outage message treated as incorrect connection state, fixed with RED→GREEN status test. Reconnect test now waits and asserts actual attempt. No deferred findings in current transport scope.
-- Final suite 40/40; real host + two guests, shared link, team choice/start, three-step Rosenberg completion mirrored to teammate/opponent. Latest guest returned to menu after host exit. Mobile390 and desktop inspected. Public deployment validation follows.
+- Final suite 41/41; real host + two guests, shared link, team choice/start, three-step Rosenberg completion mirrored to teammate/opponent. Latest guest returned to menu after host exit. Mobile390 and desktop inspected. Public deployment validation follows.

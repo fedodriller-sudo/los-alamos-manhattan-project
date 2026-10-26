@@ -861,6 +861,7 @@ function disconnect() {
   signalingBusy = false;
   signalGeneration++;
   $("signal-output").value = "";
+  $("connection-status").textContent = "";
   $("room-qr").hidden = true;
   $("room-qr").removeAttribute("src");
 }

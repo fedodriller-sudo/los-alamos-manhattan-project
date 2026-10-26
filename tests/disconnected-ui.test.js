@@ -69,3 +69,38 @@ test("unexpected host loss exits race without saving over solo journal", () => {
   assert.equal(saves, 0);
   assert.deepEqual(context.progress, solo);
 });
+
+test("closing a room clears the link, QR and stale ready message", () => {
+  const nodes = new Map(
+    ["signal-output", "connection-status", "room-qr"].map((id) => [
+      id,
+      {
+        value: "old link",
+        textContent: "Stanza aperta",
+        hidden: false,
+        removeAttribute() {},
+      },
+    ]),
+  );
+  const context = {
+    answerTimer: null,
+    clearTimeout,
+    pending: true,
+    connecting: null,
+    ws: { close() {} },
+    room: {},
+    yourId: "old",
+    signalingBusy: true,
+    signalGeneration: 0,
+    $: (id) => nodes.get(id),
+  };
+  const disconnect = source.slice(
+    source.indexOf("function disconnect()"),
+    source.indexOf("function renderLobby()"),
+  );
+  vm.runInNewContext(disconnect + "\ndisconnect();", context);
+  assert.equal(nodes.get("signal-output").value, "");
+  assert.equal(nodes.get("connection-status").textContent, "");
+  assert.equal(nodes.get("room-qr").hidden, true);
+  assert.equal(context.signalingBusy, false);
+});
