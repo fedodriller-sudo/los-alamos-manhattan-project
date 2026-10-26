@@ -10,6 +10,8 @@ const assets = [
   "js/nightshift.js",
   "js/history-data.js",
   "js/progress.js",
+  "js/team-missions.js",
+  "js/task-activities.js",
   "js/peer-room.js",
   "js/peer-session.js",
   "js/peer-signaling.js",

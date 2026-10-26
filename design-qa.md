@@ -64,3 +64,23 @@ Mantenuta la direzione cartoon notturna. Aggiunte comparse animate, respiro/camm
 La cooperativa pubblica è ora WebRTC LAN senza server di gioco: invito univoco → risposta del collega → conferma host. Il flusso espone il requisito di tenere aperto l’host e il limite delle reti isolate. Inviti pendenti annullabili, testo copiabile e azioni asincrone protette da doppi clic.
 
 Verifiche: due schede reali locali con progressi e movimento condivisi; due schede dalla versione GitHub Pages collegate e avviate; immagini tutte caricate e nessun errore console. Layout pubblico a 562×988 verificato. Nessuna prova su dispositivi fisici distinti o su tutte le configurazioni LAN. Contenuti storici invariati.
+
+## 26 ottobre 2026 · Gara Personale / Spie
+
+- Source visual truth: `docs/screenshots/selected-direction.png` (1487×1058, direction board) and `docs/screenshots/browser-host-animated.jpg` (1280×720, previous implemented campus). Both opened, then prior/current desktop captures and final victory screenshots inspected together in one comparison input. No claim of pixel-identical board fidelity: mission text, team score and new victory state are intentional additions; the board contains no victory/activity design.
+- Implementation: `docs/screenshots/team-race-desktop.jpg` and `spies-victory.jpg` at 1280×720 CSS and image pixels, density 1; `team-victory-mobile.jpg` and `team-route-mobile.jpg` at 390×844 CSS and image pixels, density 1. No density scaling required for prior/current desktop. Board comparison is art direction only.
+- State: connected 2-client race, one completed spy mission; completed spy victory on both host and losing guest; active mobile route. Dossier is scrolled after selecting a mission; upper content remains reachable in its independent scroll region. Map, header and controls retain the previous proportions.
+- Full-view comparison: same campus asset, crisp transparent characters, navy background, mint/gold controls, responsive split between dossier and world. No replacement of source illustrations by generated CSS shapes. Victory reuses actual character assets and adds a readable outcome, counts, elapsed time and host action.
+- Focused comparison: victory and route screenshots provide readable close views of headings, grid cells, labels and controls; no further crop required. Grid tap targets remain at least 44px at the tested mobile width. Long modals scroll internally.
+- Typography: existing Trebuchet/system hierarchy and line heights retained; counters no longer split the numeric fraction; victory title fits desktop and mobile.
+- Spacing/layout: existing map proportions retained; two score cards intentionally add dossier height. Victory actions fit the tested viewport; activity controls remain reachable through modal scrolling.
+- Colors/tokens: existing navy, gold and mint retained; lavender identifies Spies; team text and counts supplement color. Outcome is readable for both winning and losing clients.
+- Image quality: campus and two transparent chibi assets unchanged; no visible stretching or transparency halo in the screenshots.
+- Copy/content: Personale 4 and Spie 3 missions; all required to win. Factual notes distinct from fictional puzzles. Fixed awkward plural victory copy. No competing win rule.
+- Iteration 1: [P2] fraction wrapping in the narrow team card and grammatically inconsistent Spies outcome. Kept blocked; enabled heading wrapping with unbroken fraction and rewrote victory sentence.
+- Iteration 2: recaptured desktop team score and desktop/mobile Spies victory above; comparison confirms readable fractions and “Hanno vinto le Spie” / “La squadra Spie…” text. No actionable P0/P1/P2 visual differences remain.
+- Interaction proof: UI-only WebRTC wins for both teams; host rematch resets; wrong pass, blocked route and exposure retry; timed copy with interruption; losing client’s open activity closes at winner. Roster change updates rematch eligibility. Solo catalog and journal restored after exit, reduced-motion switch applies `reduce-motion`. No console errors/warnings on the checked tabs.
+- Checklist complete: source comparison, desktop/mobile, primary actions, error/retry, shared victory, reduced motion, console review. No deferred visual findings.
+- Test gaps: real separate LAN hardware, every browser/router and full assistive-technology testing remain unverified.
+
+final result: passed

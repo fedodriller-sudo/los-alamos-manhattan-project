@@ -1,12 +1,26 @@
 import { PeerSession } from "./peer-session.js";
-import { CHAPTERS, EVENTS, PLACES } from "./history-data.js";
+import { TEAMS, missionsFor } from "./team-missions.js";
+import { renderActivity } from "./task-activities.js";
+import {
+  CHAPTERS as SOLO_CHAPTERS,
+  EVENTS as SOLO_EVENTS,
+  PLACES,
+} from "./history-data.js";
 import {
   freshProgress,
-  attempt,
-  chapterUnlocked,
-  completedCount,
-  restoreProgress,
+  attempt as attemptFor,
+  chapterUnlocked as unlockedFor,
+  completedCount as countFor,
+  restoreProgress as restoreFor,
 } from "./progress.js";
+let EVENTS = SOLO_EVENTS,
+  CHAPTERS = SOLO_CHAPTERS;
+const attempt = (p, id, choice) => attemptFor(p, id, choice, EVENTS);
+const chapterUnlocked = (p, c) => unlockedFor(p, c, EVENTS);
+const completedCount = (p) => countFor(p, EVENTS);
+const restoreProgress = (p) => restoreFor(p, EVENTS);
+let activityCleanup = () => {},
+  shownWinnerRound = null;
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -139,7 +153,7 @@ for (const d of document.querySelectorAll("dialog")) {
     (b) => (b.onclick = () => d.close()),
   );
   d.addEventListener("click", (e) => {
-    if (e.target === d) {
+    if (e.target === d && d.id !== "victory-dialog") {
       const r = d.getBoundingClientRect();
       if (
         e.clientX < r.left ||
@@ -153,6 +167,7 @@ for (const d of document.querySelectorAll("dialog")) {
   d.addEventListener("close", () => {
     keys.clear();
     if (d.id === "event-dialog" && !d.open) {
+      activityCleanup();
       activeEvent = null;
       pending = false;
       clearTimeout(answerTimer);
@@ -190,7 +205,7 @@ function persist() {
   updateResume();
 }
 function updateResume() {
-  const p = restoreProgress(read(SAVE));
+  const p = restoreFor(read(SAVE), SOLO_EVENTS);
   $("resume-button").hidden = !Object.keys(p.steps).length;
 }
 updateResume();
@@ -244,6 +259,7 @@ function renderAvatars() {
 }
 function render() {
   const count = completedCount(progress);
+  $("total-progress").max = EVENTS.length;
   $("total-progress").value = count;
   $("progress-count").textContent = count + " / " + EVENTS.length;
   $("journal-count").textContent = count;
@@ -323,7 +339,9 @@ function render() {
     $("markers").append(b);
   }
   $("session-label").textContent = online
-    ? "Squadra cooperativa"
+    ? room?.mode === "race"
+      ? TEAMS[ownTeam()]?.name || "Squadra"
+      : "Squadra cooperativa"
     : "In solitaria";
   $("room-label").textContent =
     online && room
@@ -333,10 +351,13 @@ function render() {
   $("gather-button").hidden = !online;
   $("presence").textContent =
     online && room
-      ? room.players.length + " ricercatori · progressi condivisi"
+      ? room.players.length +
+        " giocatori · " +
+        (room.mode === "race" ? "Personale contro Spie" : "progressi condivisi")
       : count === EVENTS.length
         ? "Il diario è completo. Grazie per aver esplorato."
         : "Esplora con calma. Ogni storia conta.";
+  renderRaceScore();
   renderAvatars();
   updateNearby();
   if ($("journal-dialog").open) renderJournal();
@@ -344,9 +365,11 @@ function render() {
 function clearInvite() {
   const url = new URL(location.href);
   url.searchParams.delete("room");
+  if (url.hash.startsWith("#join=")) url.hash = "";
   history.replaceState(null, "", url);
 }
 function startSolo(resume = false) {
+  useSoloCatalog();
   clearInvite();
   disconnect();
   online = false;
@@ -385,6 +408,9 @@ function exit() {
   disconnect();
   online = false;
   room = null;
+  useSoloCatalog();
+  progress = restoreProgress(read(SAVE));
+  $("journal-count").textContent = completedCount(progress);
   for (const d of document.querySelectorAll("dialog[open]")) d.close();
   $("play").hidden = true;
   $("header-progress").hidden = true;
@@ -499,6 +525,8 @@ function openEvent(e) {
   $("event-feedback").textContent = "";
 }
 function renderEvent() {
+  activityCleanup();
+  activityCleanup = () => {};
   const e = EVENTS.find((e) => e.id === activeEvent);
   if (!e) return;
   $("event-date").textContent = e.date;
@@ -546,6 +574,16 @@ function renderEvent() {
   );
   const question = content.querySelector("h3");
   question.tabIndex = -1;
+  if (s.activity) {
+    activityCleanup =
+      renderActivity(content, s, {
+        pending,
+        sound,
+        submit: (choice) => submitAnswer(e, n, choice),
+        begin: () => send("activity_begin", { eventId: e.id, step: n }),
+      }) || (() => {});
+    return;
+  }
   if (s.interaction === "compare") {
     const table = el("table", "comparison-table");
     const caption = el("caption", "", "Dati inventati · prova di confronto");
@@ -634,6 +672,7 @@ function renderSequence(e, n, s, content) {
   refresh();
 }
 function updateProgress(p, eventId, by) {
+  const previousActiveStep = activeEvent ? progress.steps[activeEvent] : null;
   const before = completedCount(progress);
   progress = restoreProgress(p);
   persist();
@@ -644,7 +683,7 @@ function updateProgress(p, eventId, by) {
     toast((by ? by + ": " : "") + (e ? e.title : "Episodio") + " · nel diario");
     if (
       chapterUnlocked(progress, chapter + 1) &&
-      chapter < 2 &&
+      chapter < CHAPTERS.length - 1 &&
       EVENTS.filter((e) => e.chapter === chapter).every(isDone)
     ) {
       chapter++;
@@ -657,14 +696,18 @@ function updateProgress(p, eventId, by) {
     }
   }
   render();
-  if (activeEvent && $("event-dialog").open) {
+  if (
+    activeEvent &&
+    $("event-dialog").open &&
+    previousActiveStep !== progress.steps[activeEvent]
+  ) {
     renderEvent();
     if (by && by !== player.name && eventId === activeEvent)
       $("event-feedback").textContent = by + " ha aggiornato questo episodio.";
   }
 }
 function submitAnswer(e, n, i) {
-  if (pending) return;
+  if (pending || room?.winner) return;
   sound();
   $("event-feedback").textContent = "";
   if (online) {
@@ -675,14 +718,14 @@ function submitAnswer(e, n, i) {
     }
     pending = true;
     renderEvent();
-    send("answer", { eventId: e.id, step: n, choice: i });
     clearTimeout(answerTimer);
     answerTimer = setTimeout(() => {
       pending = false;
       renderEvent();
       $("event-feedback").textContent =
-        "Il server non risponde. Controlla la connessione e riprova.";
+        "L’host non risponde. Controlla la connessione e riprova.";
     }, 4000);
+    send("answer", { eventId: e.id, step: n, choice: i });
     return;
   }
   const result = attempt(progress, e.id, i);
@@ -731,7 +774,14 @@ function renderJournal() {
   }
 }
 function send(type, data = {}) {
-  if (ws?.readyState === 1) ws.send(JSON.stringify({ type, ...data }));
+  if (ws?.readyState === 1)
+    ws.send(
+      JSON.stringify({
+        type,
+        ...data,
+        ...(room?.mode === "race" ? { round: room.round } : {}),
+      }),
+    );
 }
 function disconnect() {
   clearTimeout(answerTimer);
@@ -756,19 +806,35 @@ function renderLobby() {
   $("roster").replaceChildren();
   for (const p of room.players) {
     const li = el("li", "", p.name + (p.id === yourId ? " · tu" : ""));
-    li.append(el("small", "", p.id === room.hostId ? "host" : "ricercatore"));
+    li.append(
+      el(
+        "small",
+        "",
+        (TEAMS[p.team]?.name || "ricercatore") +
+          (p.id === room.hostId ? " · host" : ""),
+      ),
+    );
     $("roster").append(li);
   }
   const host = room.hostId === yourId;
-  $("start-button").disabled = !host || room.players.length < 2;
+  const both =
+    room.mode !== "race" ||
+    ["personnel", "spies"].every((t) => room.players.some((p) => p.team === t));
+  $("rematch-button").disabled = !both;
+  $("team-picker").hidden = room.mode !== "race";
+  for (const b of $("team-picker").querySelectorAll("button")) {
+    b.disabled = room.started;
+    b.setAttribute("aria-pressed", String(b.dataset.team === ownTeam()));
+  }
+  $("start-button").disabled = !host || room.players.length < 2 || !both;
   $("start-button").textContent = room.started
     ? "Rientra nel turno"
     : host
       ? "Avvia il turno"
       : "In attesa dell’host";
   $("host-help").textContent =
-    room.players.length < 2
-      ? "Aspetta almeno un’altra persona (oppure apri una seconda scheda)."
+    room.players.length < 2 || !both
+      ? "Serve almeno una persona per squadra. Scegliete Personale e Spie."
       : host
         ? "La squadra è pronta. Puoi avviare."
         : "L’host avvierà il turno per tutti.";
@@ -784,7 +850,7 @@ function receive(m) {
     room = m.room;
     yourId = m.yourId;
     online = true;
-    progress = restoreProgress(room.progress);
+    syncRoomProgress();
     renderLobby();
     $("connection-status").textContent =
       "Collegato direttamente al browser host.";
@@ -793,22 +859,44 @@ function receive(m) {
   if (m.type === "room_update") {
     room = m.room;
     if (!room.players.some((p) => p.id === yourId)) return;
+    syncRoomProgress();
     if (playing) {
       render();
     }
     if ($("lobby-dialog").open) renderLobby();
+    if ($("victory-dialog").open) {
+      const both = ["personnel", "spies"].every((t) =>
+        room.players.some((p) => p.team === t),
+      );
+      $("rematch-button").disabled = !both;
+      if (yourId === room.hostId)
+        $("victory-host-note").textContent = both
+          ? "La rivincita mantiene le squadre e azzera le missioni."
+          : "Serve almeno una persona per squadra per la rivincita.";
+    }
     return;
   }
   if (m.type === "game_start") {
     room = m.room;
     yourId = m.yourId;
     online = true;
-    progress = restoreProgress(room.progress);
+    syncRoomProgress();
     chapter = highestChapter();
     const p = room.players.find((p) => p.id === yourId);
     player = { ...p };
+    shownWinnerRound = null;
+    activityCleanup();
+    activeEvent = null;
+    pending = false;
+    clearTimeout(answerTimer);
     begin();
-    toast("Il turno è iniziato. Le storie si completano insieme.");
+    if (room.winner) showVictory();
+    else
+      toast(
+        room.mode === "race"
+          ? "La gara è iniziata. Completa tutte le missioni della tua squadra."
+          : "Il turno è iniziato. Le storie si completano insieme.",
+      );
     return;
   }
   if (m.type === "player_move") {
@@ -827,6 +915,7 @@ function receive(m) {
     clearTimeout(answerTimer);
     pending = false;
     updateProgress(m.progress, m.eventId);
+    if (!m.ok) renderEvent();
     if (activeEvent) {
       $("event-feedback").textContent = m.ok
         ? m.feedback
@@ -841,6 +930,23 @@ function receive(m) {
   }
   if (m.type === "progress") {
     updateProgress(m.progress, m.eventId, m.by);
+    return;
+  }
+  if (m.type === "race_progress") {
+    const previous = progress;
+    room = m.room;
+    useRoomCatalog();
+    if (m.team === ownTeam()) {
+      progress = previous;
+      updateProgress(room.teamProgress[ownTeam()], m.eventId, m.by);
+    } else renderRaceScore();
+    return;
+  }
+  if (m.type === "game_over") {
+    room = m.room;
+    syncRoomProgress();
+    render();
+    showVictory();
     return;
   }
   if (m.type === "gather")
@@ -1081,3 +1187,117 @@ document.querySelector(".campus").addEventListener("click", (e) => {
     y: Math.max(15, Math.min(88, ((e.clientY - r.top) / r.height) * 100)),
   };
 });
+
+function ownTeam() {
+  return room?.players.find((p) => p.id === yourId)?.team;
+}
+function useSoloCatalog() {
+  EVENTS = SOLO_EVENTS;
+  CHAPTERS = SOLO_CHAPTERS;
+  document.body.classList.remove("race-mode");
+  $("race-score").hidden = true;
+}
+function useRoomCatalog() {
+  if (room?.mode !== "race") {
+    EVENTS = SOLO_EVENTS;
+    CHAPTERS = SOLO_CHAPTERS;
+    return;
+  }
+  const team = ownTeam();
+  if (!TEAMS[team]) return;
+  EVENTS = missionsFor(team);
+  CHAPTERS = [
+    {
+      year: TEAMS[team].name,
+      title: "Le tue missioni",
+      subtitle: TEAMS[team].subtitle,
+    },
+  ];
+  chapter = 0;
+  document.body.classList.add("race-mode");
+  document.body.dataset.team = team;
+}
+function syncRoomProgress() {
+  useRoomCatalog();
+  progress = restoreProgress(
+    room?.mode === "race" ? room.teamProgress[ownTeam()] : room?.progress,
+  );
+}
+function renderRaceScore() {
+  const score = $("race-score");
+  score.hidden = room?.mode !== "race";
+  if (score.hidden) return;
+  score.replaceChildren();
+  for (const team of ["personnel", "spies"]) {
+    const state = room.scores[team],
+      card = el(
+        "div",
+        "team-score " + team + (team === ownTeam() ? " yours" : ""),
+      ),
+      head = el("div", "score-heading"),
+      bar = el("progress");
+    head.append(
+      el("strong", "", TEAMS[team].name + (team === ownTeam() ? " · tu" : "")),
+      el("span", "", state.done + " / " + state.total),
+    );
+    bar.max = state.total;
+    bar.value = state.done;
+    bar.setAttribute("aria-label", "Missioni " + TEAMS[team].name);
+    card.append(head, bar);
+    score.append(card);
+  }
+}
+function showVictory() {
+  if (!room?.winner) return;
+  const key = room.code + ":" + room.winner.round;
+  if (shownWinnerRound === key) return;
+  shownWinnerRound = key;
+  activityCleanup();
+  activeEvent = null;
+  pending = false;
+  clearTimeout(answerTimer);
+  keys.clear();
+  target = null;
+  for (const d of document.querySelectorAll("dialog[open]")) d.close();
+  const team = room.winner.team,
+    own = ownTeam() === team;
+  $("victory-title").textContent =
+    team === "personnel" ? "Ha vinto il Personale" : "Hanno vinto le Spie";
+  $("victory-dialog").dataset.winner = team;
+  $("victory-kicker").textContent = own
+    ? "VITTORIA DELLA TUA SQUADRA"
+    : "PARTITA CONCLUSA";
+  $("victory-copy").textContent =
+    "La squadra " +
+    TEAMS[team].name +
+    " ha completato tutte le proprie missioni per prima. Il risultato è condiviso con tutti i giocatori.";
+  const sec = Math.floor(room.winner.elapsedMs / 1000);
+  $("victory-time").textContent =
+    Math.floor(sec / 60) + " min " + String(sec % 60).padStart(2, "0") + " s";
+  $("victory-scores").replaceChildren();
+  for (const t of ["personnel", "spies"]) {
+    const state = room.scores[t];
+    $("victory-scores").append(
+      el(
+        "p",
+        "",
+        TEAMS[t].name + " · " + state.done + " / " + state.total + " missioni",
+      ),
+    );
+  }
+  $("rematch-button").hidden = yourId !== room.hostId;
+  $("rematch-button").disabled = !["personnel", "spies"].every((t) =>
+    room.players.some((p) => p.team === t),
+  );
+  $("victory-host-note").textContent =
+    yourId === room.hostId
+      ? "La rivincita mantiene le squadre e azzera le missioni."
+      : "L’host può avviare una rivincita per tutti.";
+  show("victory-dialog");
+  sound("success");
+}
+$("victory-dialog").addEventListener("cancel", (e) => e.preventDefault());
+$("rematch-button").onclick = () => send("rematch");
+$("victory-menu").onclick = exit;
+for (const b of $("team-picker").querySelectorAll("button"))
+  b.onclick = () => send("choose_team", { team: b.dataset.team });

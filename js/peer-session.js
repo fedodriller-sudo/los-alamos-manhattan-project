@@ -35,14 +35,19 @@ export class PeerSession {
       ? 1
       : 0;
   }
-  host() {
-    this.room = new BrowserRoom(this.id, this.name, (id, m) => {
-      if (id === this.id)
-        queueMicrotask(() => {
-          if (!this.closed) this.receive(m);
-        });
-      else this.write(this.peers.get(id)?.channel, m);
-    });
+  host(mode = "race") {
+    this.room = new BrowserRoom(
+      this.id,
+      this.name,
+      (id, m) => {
+        if (id === this.id)
+          queueMicrotask(() => {
+            if (!this.closed) this.receive(m);
+          });
+        else this.write(this.peers.get(id)?.channel, m);
+      },
+      { mode },
+    );
   }
   write(ch, m) {
     if (

@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server/game-server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check js/nightshift.js && node --check sw.js && node --check server/game-server.js && node --check js/peer-room.js && node --check js/peer-session.js",
+    "check": "node --check js/nightshift.js && node --check sw.js && node --check server/game-server.js && node --check js/peer-room.js && node --check js/peer-session.js && node --check js/team-missions.js && node --check js/task-activities.js",
     "build": "node scripts/build.mjs"
   },
   "engines": {

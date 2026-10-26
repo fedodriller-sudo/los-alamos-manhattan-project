@@ -63,7 +63,7 @@
           </button>
           <div class="welcome-meta">
             <span>8 episodi documentati</span
-            ><span>Solo o in cooperativa · 2–8</span
+            ><span>Solo o Personale contro Spie · 2–8</span
             ><span>Facile, senza fretta</span>
           </div>
           <p class="art-note">
@@ -84,6 +84,12 @@
           </div>
           <h1>Dossier di lavoro</h1>
           <p class="dossier-intro">Segui le storie, lascia una traccia.</p>
+          <div
+            id="race-score"
+            class="race-score"
+            aria-label="Avanzamento delle squadre"
+            hidden
+          ></div>
           <div
             id="chapters"
             class="chapters"
@@ -160,13 +166,13 @@
       aria-labelledby="lobby-title"
     >
       <div class="dialog-top">
-        <span class="eyebrow">STESSA MESA, STESSA SQUADRA</span
+        <span class="eyebrow">DUE SQUADRE · UN SOLO VINCITORE</span
         ><button class="close-button" data-close aria-label="Chiudi">×</button>
       </div>
-      <h2 id="lobby-title">Un turno insieme.</h2>
+      <h2 id="lobby-title">Personale contro Spie.</h2>
       <p>
-        Collaborate agli stessi episodi. Ognuno può esplorare; i progressi sono
-        condivisi.
+        Vince la squadra che completa tutte le proprie missioni per prima.
+        Scegli il tuo gruppo e prepara il turno.
       </p>
       <form id="lobby-form">
         <label for="player-name">Il tuo nome</label
@@ -206,6 +212,20 @@
         <button id="cancel-invites" class="text-button">
           Annulla inviti non collegati
         </button>
+        <div
+          id="team-picker"
+          class="team-picker"
+          role="group"
+          aria-label="Scegli la squadra"
+        >
+          <button type="button" data-team="personnel" aria-pressed="false">
+            <strong>Personale</strong
+            ><span>4 missioni · sicurezza e logistica</span>
+          </button>
+          <button type="button" data-team="spies" aria-pressed="false">
+            <strong>Spie</strong><span>3 missioni · documenti e copertura</span>
+          </button>
+        </div>
         <ul id="roster" class="roster"></ul>
         <button id="start-button" class="button gold full">
           Avvia il turno
@@ -241,6 +261,30 @@
           chiusura dell’host termina la partita.
         </p>
       </details>
+    </dialog>
+    <dialog
+      id="victory-dialog"
+      class="dialog victory-dialog"
+      aria-labelledby="victory-title"
+      aria-describedby="victory-copy"
+    >
+      <div class="victory-ribbons" aria-hidden="true"></div>
+      <p id="victory-kicker" class="eyebrow">PARTITA CONCLUSA</p>
+      <div class="victory-emblem" aria-hidden="true">
+        <img src="./img/scientist-chibi.png" alt="" /><img
+          src="./img/researcher-chibi.png"
+          alt=""
+        />
+      </div>
+      <h2 id="victory-title">Ha vinto il Personale</h2>
+      <p id="victory-copy"></p>
+      <div id="victory-scores" class="victory-scores"></div>
+      <p class="victory-duration">
+        Tempo di gara <strong id="victory-time"></strong>
+      </p>
+      <button id="rematch-button" class="button gold full">Rivincita</button>
+      <button id="victory-menu" class="button full">Torna al menu</button>
+      <p id="victory-host-note" class="subtle"></p>
     </dialog>
     <dialog
       id="event-dialog"
@@ -348,7 +392,8 @@
       </ol>
       <p>
         In cooperativa, le risposte giuste di chiunque fanno avanzare la
-        squadra. Se l’host esce, il ruolo passa a chi resta.
+        squadra. L’host deve tenere aperta la scheda: se esce, la partita
+        termina.
       </p>
       <button class="button gold full" data-close>Ho capito, esploriamo</button>
     </dialog>

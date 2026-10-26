@@ -1,21 +1,22 @@
 # Los Alamos — Il turno di notte
 
-Un piccolo gioco browser in italiano: esplora una Los Alamos cartoon notturna e attraversa otto episodi ispirati alla vita del laboratorio tra il 1943 e il 1945. Facile, senza timer o penalità. Da soli oppure in cooperativa locale da **2 a 8 persone**.
+Un piccolo gioco browser in italiano: esplora una Los Alamos cartoon notturna e attraversa otto episodi ispirati alla vita del laboratorio tra il 1943 e il 1945. La campagna singola è facile, senza timer. In LAN si gioca **Personale contro Spie, da 2 a 8 persone**, con attività brevi e ripetibili.
 
 ## Gioca dal browser
 
-La versione attuale è statica: singolo e cooperativa WebRTC funzionano su GitHub Pages, senza Node sul computer dei giocatori. Il workflow **Publish browser game** esegue test, crea il pacchetto pubblico e pubblica con GitHub Actions dai rami `codex/los-alamos-nightshift` e `main`. Il proprietario ha attivato Pages con sorgente GitHub Actions.
+La versione attuale è statica: singolo e gara a squadre WebRTC funzionano su GitHub Pages, senza Node sul computer dei giocatori. Il workflow **Publish browser game** esegue test, crea il pacchetto pubblico e pubblica con GitHub Actions dai rami `codex/los-alamos-nightshift` e `main`. Il proprietario ha attivato Pages con sorgente GitHub Actions.
 
-### Cooperativa LAN (2–8)
+### Personale contro Spie in LAN (2–8)
 
 1. Tutti aprono il sito HTTPS sulla stessa rete. L’host sceglie **Gioca con gli amici → Crea una stanza**.
 2. L’host genera un invito distinto per ciascun collega e lo condivide privatamente.
 3. Il collega apre il link oppure lo incolla nel campo invito, inserisce il nome e preme **Entra**. Copia la risposta mostrata e la restituisce all’host.
-4. L’host incolla la risposta e preme **Collega il collega**, poi avvia il turno quando sono presenti almeno due persone.
+4. L’host incolla la risposta e preme **Collega il collega**, poi ciascuno sceglie **Personale** o **Spie**. Serve almeno una persona per squadra per avviare.
+5. Vince chi completa per primo **tutte** le proprie missioni: 4 per il Personale, 3 per le Spie. La schermata finale appare a tutti; solo l’host può avviare la rivincita, mantenendo le squadre e azzerando entrambe le progressioni.
 
 Gli inviti non collegati possono essere annullati senza espellere i presenti. Non servono account, server di gioco, signaling, STUN o TURN. La connessione avviene direttamente fra browser tramite DataChannel WebRTC. L’host verifica risposte e progressi. Una persona può entrare anche dopo l’avvio.
 
-**L’host deve tenere aperta la scheda**: se la chiude la partita termina, senza trasferimento automatico. I progressi cooperativi restano in memoria; il diario singolo salvato non viene sovrascritto. Reti ospiti con isolamento dei dispositivi, firewall o browser che impediscono WebRTC possono bloccare il collegamento. Il test eseguito usa due schede reali sullo stesso computer; non certifica ogni router LAN o browser mobile. Gli inviti contengono dati di collegamento: condividili solo con i partecipanti.
+**L’host deve tenere aperta la scheda**: se la chiude la partita termina, senza trasferimento automatico. I progressi della gara restano in memoria; il diario singolo salvato non viene sovrascritto. Reti ospiti con isolamento dei dispositivi, firewall o browser che impediscono WebRTC possono bloccare il collegamento. Il test eseguito usa due schede reali sullo stesso computer; non certifica ogni router LAN o browser mobile. Gli inviti contengono dati di collegamento: condividili solo con i partecipanti.
 
 ### Anteprima e build
 
@@ -37,7 +38,7 @@ Il vecchio server Node è conservato per consultazione e test di regressione, ma
 - Nel **Diario** trovi fatti documentati, fonti e limiti della ricostruzione.
 - Nelle **Impostazioni** regoli suoni, volume e movimento ridotto. Il sistema rispetta anche `prefers-reduced-motion`.
 
-Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Su HTTPS/localhost il service worker conserva gli asset per l’esplorazione offline dopo il primo caricamento. Il collegamento cooperativo richiede che il browser host resti raggiungibile.
+Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Su HTTPS/localhost il service worker conserva gli asset per l’esplorazione offline dopo il primo caricamento. Il collegamento multiplayer richiede che il browser host resti raggiungibile.
 
 Il campus comprende colleghi in movimento, particelle notturne, animazioni di respiro e camminata, transizioni e movimento libero con un tocco. Le animazioni decorative si disattivano con movimento ridotto. Gli NPC sono comparse artistiche, senza attribuzioni a persone storiche.
 
@@ -67,6 +68,14 @@ I test usano il runner Node integrato. Quelli multiplayer aprono connessioni esc
 - `server/game-server.js`: file pubblici, stanze e sincronizzazione autorevole.
 - `tests/`: progressione e integrazione con client WebSocket reali.
 
-I moduli della precedente versione sono conservati per consultazione, ma non vengono caricati dal nuovo punto d'ingresso. La nuova modalità cooperativa sostituisce spie, votazioni ed espulsioni con episodi condivisi.
+I moduli della precedente versione sono conservati per consultazione, ma non vengono caricati dal nuovo punto d'ingresso. La gara a squadre usa missioni separate e un vincitore comune a tutti i client; non include votazioni o espulsioni. Il vecchio server WebSocket resta solo per regressione.
 
 Le illustrazioni originali in `img/campus-night.png`, `img/scientist-chibi.png` e `img/researcher-chibi.png` sono generate per questa revisione. Non sono fotografie o documenti storici. Nessuna dipendenza grafica esterna viene caricata dal browser.
+
+### Le sette missioni di squadra
+
+Il Personale completa tre campioni stabili con deriva del segnale, un percorso con ostacoli e registro, una raccolta con deposito entro un limite simbolico, e otto controlli dei pass. Le Spie completano copia/nascondimento di un fascicolo, destinatario/timbro/consegna e sequenze di archivio. Gli errori consentono di riprovare.
+
+I dettagli dei progressi vengono inviati soltanto ai compagni; gli avversari ricevono i conteggi delle missioni completate. L’host conserva lo stato autorevole e accetta solo le risposte della squadra del mittente, nel turno e passaggio correnti. Come ogni gioco statico ospitato da un partecipante, non offre protezione anticheat contro un host modificato o un client che ispeziona il codice pubblico.
+
+La gara è una finzione storica: il dossier distingue i fatti dalle attività inventate, include fonti per Fuchs, Rosenberg e Seborer e precisa che l’incidente di Slotin risale al 1946. Le scale, i campioni e le sequenze sono simbolici.
