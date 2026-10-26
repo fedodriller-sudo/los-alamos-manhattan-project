@@ -1,3 +1,4 @@
+import { roomLink } from "./peer-config.js";
 import { PeerSession } from "./peer-session.js";
 import { TEAMS, missionsFor } from "./team-missions.js";
 import { renderActivity } from "./task-activities.js";
@@ -67,6 +68,9 @@ let toastTimer,
   master = null;
 const keys = new Set(),
   avatarNodes = new Map();
+const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+const activeCues = new Set();
+const reducedMotion = () => prefs.motion || motionQuery.matches;
 const stored = read(PREFS) || {};
 const prefs = {
   sound: stored.sound !== false,
@@ -121,7 +125,12 @@ function sound(kind = "tap") {
   }
 }
 function applyPrefs() {
-  document.body.classList.toggle("reduce-motion", prefs.motion);
+  document.body.classList.toggle("reduce-motion", reducedMotion());
+  if (reducedMotion()) {
+    for (const a of activeCues) a.cancel();
+    activeCues.clear();
+    target = null;
+  }
   $("sound-toggle").checked = prefs.sound;
   $("motion-toggle").checked = prefs.motion;
   $("volume").value = prefs.volume;
@@ -129,6 +138,7 @@ function applyPrefs() {
   write(PREFS, prefs);
 }
 applyPrefs();
+motionQuery.addEventListener("change", applyPrefs);
 $("sound-toggle").onchange = (e) => {
   prefs.sound = e.target.checked;
   applyPrefs();
@@ -259,6 +269,8 @@ function renderAvatars() {
 }
 function render() {
   const count = completedCount(progress);
+  $("progress-label").textContent =
+    room?.mode === "race" ? "Missioni della tua squadra" : "Il nostro diario";
   $("total-progress").max = EVENTS.length;
   $("total-progress").value = count;
   $("progress-count").textContent = count + " / " + EVENTS.length;
@@ -285,58 +297,94 @@ function render() {
   $("chapter-year").textContent = c.year;
   $("chapter-title").textContent = c.title;
   $("chapter-subtitle").textContent = c.subtitle;
-  $("mission-list").replaceChildren();
+  const missionFocus = document.activeElement?.dataset.mission;
+  const missionSignature = JSON.stringify([
+    chapter,
+    selected,
+    EVENTS.map((e) => [e.id, progress.steps[e.id] || 0]),
+  ]);
+  const list = $("mission-list");
   const missions = EVENTS.filter((e) => e.chapter === chapter);
-  missions.forEach((e, i) => {
-    const li = el("li"),
-      b = el(
-        "button",
-        "mission-button" +
-          (isDone(e) ? " done" : "") +
-          (selected === e.id ? " selected" : ""),
-        e.title,
+  if (list.dataset.signature !== missionSignature) {
+    list.dataset.signature = missionSignature;
+    list.replaceChildren();
+    missions.forEach((e, i) => {
+      const li = el("li"),
+        b = el(
+          "button",
+          "mission-button" +
+            (isDone(e) ? " done" : "") +
+            (selected === e.id ? " selected" : ""),
+          e.title,
+        );
+      b.dataset.number = String(i + 1).padStart(2, "0");
+      b.dataset.mission = e.id;
+      if (selected === e.id) b.setAttribute("aria-current", "true");
+      b.append(
+        el(
+          "small",
+          "",
+          isDone(e) ? "Nel diario · rileggi" : e.kind + " · " + e.duration,
+        ),
       );
-    b.dataset.number = String(i + 1).padStart(2, "0");
-    b.append(
-      el(
-        "small",
-        "",
-        isDone(e) ? "Nel diario · rileggi" : e.kind + " · " + e.duration,
-      ),
-    );
-    b.onclick = () => selectEvent(e);
-    li.append(b);
-    $("mission-list").append(li);
-  });
-  $("markers").replaceChildren();
-  for (const p of PLACES) {
-    const events = missions.filter((e) => e.place === p.id);
-    const available = events.some((e) => !isDone(e));
-    const b = el(
-      "button",
-      "place-marker" +
-        (available ? " active" : "") +
-        (EVENTS.find((e) => e.id === selected)?.place === p.id
-          ? " selected"
-          : ""),
-    );
-    b.style.left = p.x + "%";
-    b.style.top = p.y + "%";
-    b.append(
-      el("span", "marker-number", p.number),
-      document.createTextNode(p.name),
-    );
-    b.setAttribute(
-      "aria-label",
-      p.name + (available ? ", episodio disponibile" : ""),
-    );
-    b.onclick = () => {
-      const e = events.find((e) => !isDone(e)) || events[0];
-      if (e) selectEvent(e);
-      else
-        toast("Nessun episodio in questo luogo nel capitolo " + c.year + ".");
-    };
-    $("markers").append(b);
+      const stepCount = progress.steps[e.id] || 0;
+      const meter = el("span", "mission-meter");
+      meter.setAttribute("aria-hidden", "true");
+      meter.style.setProperty(
+        "--done",
+        (stepCount / e.steps.length) * 100 + "%",
+      );
+      b.append(meter);
+      if (stepCount > 0 && !isDone(e))
+        b.append(
+          el(
+            "span",
+            "mission-state",
+            stepCount + " / " + e.steps.length + " passaggi",
+          ),
+        );
+      if (isDone(e)) b.append(el("span", "mission-state", "Completata"));
+      b.onclick = () => selectEvent(e);
+      li.append(b);
+      $("mission-list").append(li);
+    });
+    if (missionFocus)
+      list
+        .querySelector(`[data-mission="${missionFocus}"]`)
+        ?.focus({ preventScroll: true });
+  }
+  if ($("markers").dataset.signature !== missionSignature) {
+    $("markers").dataset.signature = missionSignature;
+    $("markers").replaceChildren();
+    for (const p of PLACES) {
+      const events = missions.filter((e) => e.place === p.id);
+      const available = events.some((e) => !isDone(e));
+      const b = el(
+        "button",
+        "place-marker" +
+          (available ? " active" : "") +
+          (EVENTS.find((e) => e.id === selected)?.place === p.id
+            ? " selected"
+            : ""),
+      );
+      b.style.left = p.x + "%";
+      b.style.top = p.y + "%";
+      b.append(
+        el("span", "marker-number", p.number),
+        document.createTextNode(p.name),
+      );
+      b.setAttribute(
+        "aria-label",
+        p.name + (available ? ", episodio disponibile" : ""),
+      );
+      b.onclick = () => {
+        const e = events.find((e) => !isDone(e)) || events[0];
+        if (e) selectEvent(e);
+        else
+          toast("Nessun episodio in questo luogo nel capitolo " + c.year + ".");
+      };
+      $("markers").append(b);
+    }
   }
   $("session-label").textContent = online
     ? room?.mode === "race"
@@ -365,7 +413,7 @@ function render() {
 function clearInvite() {
   const url = new URL(location.href);
   url.searchParams.delete("room");
-  if (url.hash.startsWith("#join=")) url.hash = "";
+  if (url.hash.startsWith("#room=")) url.hash = "";
   history.replaceState(null, "", url);
 }
 function startSolo(resume = false) {
@@ -393,6 +441,8 @@ function begin() {
   $("header-progress").hidden = false;
   for (const d of document.querySelectorAll("dialog[open]")) d.close();
   render();
+  cue(document.querySelector(".campus-column"), "arrival");
+  cue(document.querySelector(".dossier"), "enter");
   $("map").focus({ preventScroll: true });
   sound("success");
 }
@@ -432,7 +482,7 @@ function selectEvent(e) {
     return;
   }
   const p = PLACES.find((p) => p.id === e.place);
-  if (prefs.motion) {
+  if (reducedMotion()) {
     player.x = p.x;
     player.y = Math.min(88, p.y + 6);
     renderAvatars();
@@ -537,6 +587,16 @@ function renderEvent() {
   const content = $("event-content");
   content.replaceChildren();
   const n = progress.steps[e.id] || 0;
+  const stepKey = e.id + ":" + n;
+  if (content.dataset.step !== stepKey) {
+    content.dataset.step = stepKey;
+    cue(content, "enter");
+  }
+  const stepMeter = el("progress", "activity-step-meter");
+  stepMeter.max = e.steps.length;
+  stepMeter.value = n;
+  stepMeter.setAttribute("aria-label", "Passaggi completati");
+  content.append(stepMeter);
   $("event-hint").hidden = n >= e.steps.length;
   if (n >= e.steps.length) {
     content.append(
@@ -696,6 +756,8 @@ function updateProgress(p, eventId, by) {
     }
   }
   render();
+  if (after > before)
+    cue(document.querySelector(`[data-mission="${eventId}"]`), "success");
   if (
     activeEvent &&
     $("event-dialog").open &&
@@ -729,6 +791,8 @@ function submitAnswer(e, n, i) {
     return;
   }
   const result = attempt(progress, e.id, i);
+  cue($("event-dialog"), result.ok ? "success" : "error");
+  $("event-feedback").dataset.kind = result.ok ? "success" : "error";
   if (result.ok) {
     sound("success");
     persist();
@@ -794,15 +858,20 @@ function disconnect() {
   }
   room = null;
   yourId = null;
+  signalingBusy = false;
+  signalGeneration++;
+  $("signal-output").value = "";
+  $("room-qr").hidden = true;
+  $("room-qr").removeAttribute("src");
 }
 function renderLobby() {
   if (!room) return;
   $("lobby-entry").hidden = true;
   $("lobby-waiting").hidden = false;
-  $("code-display").textContent = room.players.length + " / 8 ricercatori";
+  $("code-display").textContent = room.players.length + " / 8 collegati";
+  $("player-name").hidden = true;
+  $("name-label").hidden = true;
   $("copy-invite").hidden = room.hostId !== yourId;
-  $("cancel-invites").hidden = room.hostId !== yourId;
-  $("accept-answer").hidden = room.hostId !== yourId;
   $("roster").replaceChildren();
   for (const p of room.players) {
     const li = el("li", "", p.name + (p.id === yourId ? " · tu" : ""));
@@ -839,6 +908,7 @@ function renderLobby() {
         ? "La squadra è pronta. Puoi avviare."
         : "L’host avvierà il turno per tutti.";
   $("player-name").disabled = true;
+  renderSignaling();
 }
 function receive(m) {
   if (m.type === "error") {
@@ -853,10 +923,16 @@ function receive(m) {
     syncRoomProgress();
     renderLobby();
     $("connection-status").textContent =
-      "Collegato direttamente al browser host.";
+      yourId === room.hostId
+        ? "Stanza aperta su questo browser."
+        : "Collegato alla stanza. Scegli la tua squadra.";
     return;
   }
   if (m.type === "room_update") {
+    if (m.room.players.length > (room?.players.length || 0)) {
+      $("connection-status").textContent =
+        "Giocatore collegato. Puoi invitare altre persone.";
+    }
     room = m.room;
     if (!room.players.some((p) => p.id === yourId)) return;
     syncRoomProgress();
@@ -925,6 +1001,8 @@ function receive(m) {
             ? "Riprova con calma. " + m.hint
             : "Questo episodio non è ancora disponibile.";
     }
+    cue($("event-dialog"), m.ok ? "success" : "error");
+    $("event-feedback").dataset.kind = m.ok ? "success" : "error";
     sound(m.ok ? "success" : "wrong");
     return;
   }
@@ -955,111 +1033,106 @@ function receive(m) {
         " richiama il gruppo alla sala riunioni. Potete raggiungerla sulla mappa.",
     );
 }
+let signalingBusy = false;
+let signalGeneration = 0;
 function newSession() {
   disconnect();
-  const session = new PeerSession($("player-name").value, receive, () => {
-    clearTimeout(answerTimer);
-    pending = false;
-    renderEvent();
-    toast("L’host si è scollegato. Chiedi un nuovo invito per ricominciare.");
-    $("connection-status").textContent =
-      "Collegamento chiuso. Crea o accetta un nuovo invito.";
-  });
+  const session = new PeerSession(
+    $("player-name").value,
+    (m) => {
+      if (ws === session) receive(m);
+    },
+    (message) => {
+      if (ws !== session) return;
+      // Exit while still multiplayer: never persist race progress into the solo diary.
+      if (playing) exit();
+      else {
+        disconnect();
+        online = false;
+      }
+      toast(message);
+      $("connection-status").textContent = message;
+      renderSignaling();
+    },
+    {
+      onstatus: (message) => {
+        if (ws === session) $("connection-status").textContent = message;
+      },
+    },
+  );
   ws = session;
   return session;
 }
-let signalingBusy = false;
 async function signalAction(action) {
   if (signalingBusy) return;
+  const session = newSession();
+  const generation = signalGeneration;
   signalingBusy = true;
-  const buttons = [
-    "create-button",
-    "join-button",
-    "copy-invite",
-    "accept-answer",
-  ];
-  for (const id of buttons) $(id).disabled = true;
+  renderSignaling();
+  $("connection-status").textContent = "Collegamento alla stanza…";
   try {
-    $("signal-output").value = "";
-    $("connection-status").textContent = "Preparazione collegamento…";
-    await action();
+    await action(session);
+    if (ws !== session || generation !== signalGeneration) return;
+    if (session.room) {
+      const link = roomLink(location.href, session.id);
+      $("signal-output").value = link;
+      const { toDataURL } = await import("./vendor/qrcode.js");
+      const qr = await toDataURL(link, {
+        width: 180,
+        margin: 2,
+        errorCorrectionLevel: "M",
+      });
+      if (ws !== session || generation !== signalGeneration) return;
+      $("room-qr").src = qr;
+      $("room-qr").hidden = false;
+    }
   } catch (e) {
+    if (ws !== session || generation !== signalGeneration) return;
+    if (!session.readyState) {
+      session.close();
+      ws = null;
+    }
     $("connection-status").textContent = e.message;
   } finally {
-    signalingBusy = false;
-    for (const id of buttons) $(id).disabled = false;
+    if (generation === signalGeneration) {
+      signalingBusy = false;
+      renderSignaling();
+    }
   }
 }
-$("copy-signal").onclick = async () => {
+async function copyInvite() {
   const output = $("signal-output");
-  if (!output.value) {
-    toast("Genera prima un invito o una risposta.");
-    return;
-  }
+  if (!output.value) return;
   try {
     await navigator.clipboard.writeText(output.value);
-    toast("Copiato. Condividilo con il collega.");
+    toast("Link copiato. Condividi lo stesso link con tutti gli amici.");
   } catch {
     output.focus();
     output.select();
-    toast("Testo selezionato: copialo e condividilo con il collega.");
+    toast("Link selezionato: copialo e condividilo con gli amici.");
   }
-};
+}
+$("copy-signal").onclick = copyInvite;
+$("copy-invite").onclick = copyInvite;
 $("coop-button").onclick = () => {
-  $("player-name").disabled = false;
-  $("lobby-entry").hidden = false;
-  $("lobby-waiting").hidden = true;
+  if (room) renderLobby();
+  else renderSignaling();
   show("lobby-dialog");
 };
-$("create-button").onclick = () => {
-  newSession().host();
-  $("connection-status").textContent =
-    "Stanza creata. Genera un invito per ogni collega.";
-};
+$("create-button").onclick = () => signalAction((session) => session.host());
 $("lobby-form").onsubmit = (e) => {
   e.preventDefault();
-  signalAction(async () => {
-    const session = newSession();
-    const answer = await session.join($("room-code").value);
-    $("signal-output").value = answer;
-    $("connection-status").textContent =
-      "Invia questa risposta all’host e attendi il collegamento.";
-  });
+  const invite = $("room-code").value;
+  signalAction((session) => session.join(invite));
 };
-$("accept-answer").onclick = () =>
-  signalAction(async () => {
-    await ws.accept($("signal-input").value);
-    $("connection-status").textContent =
-      "Risposta accettata. Collegamento in corso…";
-  });
 $("start-button").onclick = () => {
   if (room?.started) begin();
   else send("start_game");
 };
-async function copyInvite() {
-  await signalAction(async () => {
-    const token = await ws.invite();
-    const url = new URL(location.href);
-    url.search = "";
-    url.hash = "join=" + token;
-    $("signal-output").value = url.href;
-    $("connection-status").textContent =
-      "Invito pronto. Copialo e invialo a una sola persona; poi incolla qui la sua risposta.";
-    try {
-      await navigator.clipboard.writeText(url.href);
-    } catch {
-      /* Text remains selectable. */
-    }
-  });
-}
-$("cancel-invites").onclick = () => {
-  ws?.cancelInvites();
-  $("signal-output").value = "";
-  $("connection-status").textContent =
-    "Inviti pendenti annullati. I colleghi già collegati restano in partita.";
+$("invite-button").onclick = () => {
+  renderLobby();
+  show("lobby-dialog");
 };
-$("copy-invite").onclick = copyInvite;
-$("invite-button").onclick = () => show("lobby-dialog");
 $("gather-button").onclick = () => {
   send("gather");
   sound();
@@ -1142,12 +1215,17 @@ function frame(time) {
       updateNearby();
     } else n?.classList.remove("walking");
   } else avatarNodes.get(online ? yourId : "self")?.classList.remove("walking");
+  const destination = $("destination");
+  destination.hidden =
+    !playing || !target || !!document.querySelector("dialog[open]");
+  if (target) {
+    destination.style.left = target.x + "%";
+    destination.style.top = target.y + "%";
+  }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
-const invite = location.hash.startsWith("#join=")
-  ? location.hash.slice(6)
-  : null;
+const invite = location.hash.startsWith("#room=") ? location.href : null;
 if (invite) {
   $("room-code").value = invite;
   show("lobby-dialog");
@@ -1186,6 +1264,14 @@ document.querySelector(".campus").addEventListener("click", (e) => {
     x: Math.max(5, Math.min(95, ((e.clientX - r.left) / r.width) * 100)),
     y: Math.max(15, Math.min(88, ((e.clientY - r.top) / r.height) * 100)),
   };
+  if (reducedMotion()) {
+    player.x = target.x;
+    player.y = target.y;
+    target = null;
+    renderAvatars();
+    sendMove();
+    updateNearby();
+  }
 });
 
 function ownTeam() {
@@ -1226,7 +1312,13 @@ function syncRoomProgress() {
 function renderRaceScore() {
   const score = $("race-score");
   score.hidden = room?.mode !== "race";
-  if (score.hidden) return;
+  if (score.hidden) {
+    score.dataset.version = "";
+    return;
+  }
+  const version = JSON.stringify([room.round, ownTeam(), room.scores]);
+  if (score.dataset.version === version) return;
+  score.dataset.version = version;
   score.replaceChildren();
   for (const team of ["personnel", "spies"]) {
     const state = room.scores[team],
@@ -1301,3 +1393,70 @@ $("rematch-button").onclick = () => send("rematch");
 $("victory-menu").onclick = exit;
 for (const b of $("team-picker").querySelectorAll("button"))
   b.onclick = () => send("choose_team", { team: b.dataset.team });
+
+function renderSignaling() {
+  const hosting = !!room && room.hostId === yourId;
+  $("lobby-entry").hidden = !!room;
+  $("lobby-waiting").hidden = !room;
+  $("name-label").hidden = !!room;
+  $("player-name").hidden = !!room;
+  $("player-name").disabled = signalingBusy || !!room;
+  $("room-code").disabled = signalingBusy;
+  $("create-button").disabled = signalingBusy;
+  $("join-button").disabled = signalingBusy;
+  $("signal-panel").hidden = !hosting || !$("signal-output").value;
+  $("copy-invite").hidden = !hosting;
+  $("copy-invite").disabled = !$("signal-output").value;
+  $("cancel-join").hidden = !signalingBusy;
+  $("connection-status").dataset.busy = String(signalingBusy);
+  const both = ["personnel", "spies"].every((t) =>
+    room?.players.some((p) => p.team === t),
+  );
+  const step = signalingBusy ? "link" : both ? "ready" : "team";
+  for (const item of document.querySelectorAll(".lobby-steps li")) {
+    if (item.dataset.stage === step) item.setAttribute("aria-current", "step");
+    else item.removeAttribute("aria-current");
+  }
+}
+
+function cue(node, kind) {
+  if (!node || reducedMotion() || !node.animate) return;
+  const frames = {
+    enter: [
+      { opacity: 0, transform: "translateY(10px)" },
+      { opacity: 1, transform: "translateY(0)" },
+    ],
+    arrival: [
+      { opacity: 0.25, transform: "translateY(14px)" },
+      { opacity: 1, transform: "translateY(0)" },
+    ],
+    success: [
+      { boxShadow: "0 0 0 0 #8bd5c200" },
+      { boxShadow: "0 0 0 3px #8bd5c299", offset: 0.4 },
+      { boxShadow: "0 0 0 0 #8bd5c200" },
+    ],
+    error: [
+      { transform: "translateX(0)" },
+      { transform: "translateX(-4px)" },
+      { transform: "translateX(4px)" },
+      { transform: "translateX(0)" },
+    ],
+  };
+  const animation = node.animate(frames[kind], {
+    duration: kind === "arrival" ? 650 : kind === "error" ? 220 : 420,
+    easing: "ease-out",
+  });
+  activeCues.add(animation);
+  animation.finished
+    .catch(() => {})
+    .finally(() => activeCues.delete(animation));
+}
+
+$("cancel-join").onclick = () => {
+  disconnect();
+  online = false;
+  $("connection-status").textContent =
+    "Collegamento annullato. Puoi riprovare.";
+  renderSignaling();
+  $("room-code").focus();
+};

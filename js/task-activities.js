@@ -95,6 +95,7 @@ export function renderActivity(
           }
         }
       }
+      root.dataset.state = failed ? "error" : "active";
       meter.value = stable;
       confirm.disabled = pending || holding || !ready;
       confirm.textContent = holding
@@ -197,6 +198,7 @@ export function renderActivity(
       1;
     const confirm = button("Consegna", () => finish(path), "button gold");
     const paint = () => {
+      root.dataset.state = failed ? "error" : "active";
       const pos = path.at(-1);
       for (const [i, b] of cells.entries()) {
         b.className =
@@ -307,6 +309,8 @@ export function renderActivity(
     const update = () => {
       confirm.disabled =
         !active || selected.size !== step.targets.length || pending;
+      root.dataset.state =
+        exposure >= 5 || remaining === 0 ? "error" : "active";
       meter.value = exposure;
       status.textContent = `${selected.size} / ${step.targets.length} raccolti · ${Math.ceil(remaining)} s · esposizione ${exposure} / 5`;
       cells.forEach((b, i) => {
@@ -398,11 +402,7 @@ export function renderActivity(
       started = last;
     const machine = node("div", "copy-machine");
     machine.append(
-      node(
-        "div",
-        "document-label",
-        "FASCICOLO DI COPERTURA · PROJECT Y",
-      ),
+      node("div", "document-label", "FASCICOLO DI COPERTURA · PROJECT Y"),
     );
     const sheet = node("div", "copy-sheet", "PROJECT Y / ARCHIVIO"),
       bar = node("progress");

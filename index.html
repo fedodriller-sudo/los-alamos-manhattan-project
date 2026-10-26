@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#091727" />
     <meta
       name="description"
-      content="Un piccolo gioco cooperativo tra storie vere, laboratori e notti sulla mesa."
+      content="Esplora Los Alamos: storie documentate e Personale contro Spie in LAN."
     />
     <title>Los Alamos · Il turno di notte</title>
     <link rel="icon" href="icons/icon.svg" />
@@ -25,7 +25,10 @@
         ></a
       >
       <div id="header-progress" class="header-progress" hidden>
-        <div><span>Il nostro diario</span><b id="progress-count">0 / 8</b></div>
+        <div>
+          <span id="progress-label">Il nostro diario</span
+          ><b id="progress-count">0 / 8</b>
+        </div>
         <progress
           id="total-progress"
           max="8"
@@ -137,6 +140,9 @@
             />
             <div id="markers" class="markers"></div>
             <div id="avatars" class="avatars"></div>
+            <div id="destination" class="destination" hidden aria-hidden="true">
+              <span>Destinazione</span>
+            </div>
             <div class="map-stamp" aria-hidden="true">
               PAJARITO PLATEAU<small>LOS ALAMOS, NEW MEXICO</small>
             </div>
@@ -170,12 +176,21 @@
         ><button class="close-button" data-close aria-label="Chiudi">×</button>
       </div>
       <h2 id="lobby-title">Personale contro Spie.</h2>
-      <p>
+      <p class="lobby-intro">
         Vince la squadra che completa tutte le proprie missioni per prima.
         Scegli il tuo gruppo e prepara il turno.
       </p>
+      <ol class="lobby-steps" aria-label="Preparazione partita">
+        <li data-stage="team">01 <span>Squadra</span></li>
+        <li data-stage="link">02 <span>Collegamento</span></li>
+        <li data-stage="ready">03 <span>Pronti</span></li>
+      </ol>
+      <p class="network-note">
+        Giocate sulla stessa rete Wi‑Fi oppure collegatevi all’hotspot di un
+        amico. Serve una connessione Internet per entrare nella stanza.
+      </p>
       <form id="lobby-form">
-        <label for="player-name">Il tuo nome</label
+        <label id="name-label" for="player-name">Il tuo nome</label
         ><input
           id="player-name"
           maxlength="24"
@@ -193,9 +208,9 @@
               id="room-code"
               aria-label="Invito dell’host"
               placeholder="Incolla il link di invito"
-              maxlength="50000"
+              maxlength="512"
               autocomplete="off"
-              autocapitalize="characters"
+              autocapitalize="off"
             /><button id="join-button" type="submit" class="button">
               Entra
             </button>
@@ -204,14 +219,13 @@
       </form>
       <p id="connection-status" class="connection-status" role="status"></p>
       <div id="lobby-waiting" hidden>
-        <p class="eyebrow">SQUADRA LAN</p>
+        <p class="eyebrow">SCEGLI LA TUA SQUADRA</p>
         <div class="code-line">
-          <strong id="code-display"></strong
-          ><button id="copy-invite" class="button small">Genera invito</button>
+          <strong id="code-display" aria-label="Giocatori collegati"></strong
+          ><button id="copy-invite" class="button small">
+            Copia link stanza
+          </button>
         </div>
-        <button id="cancel-invites" class="text-button">
-          Annulla inviti non collegati
-        </button>
         <div
           id="team-picker"
           class="team-picker"
@@ -219,11 +233,20 @@
           aria-label="Scegli la squadra"
         >
           <button type="button" data-team="personnel" aria-pressed="false">
-            <strong>Personale</strong
+            <img
+              src="img/scientist-chibi.png"
+              alt=""
+              aria-hidden="true"
+            /><strong>Personale</strong
             ><span>4 missioni · sicurezza e logistica</span>
           </button>
           <button type="button" data-team="spies" aria-pressed="false">
-            <strong>Spie</strong><span>3 missioni · documenti e copertura</span>
+            <img
+              src="img/researcher-chibi.png"
+              alt=""
+              aria-hidden="true"
+            /><strong>Spie</strong
+            ><span>3 missioni · documenti e copertura</span>
           </button>
         </div>
         <ul id="roster" class="roster"></ul>
@@ -232,33 +255,57 @@
         </button>
         <p id="host-help" class="subtle"></p>
       </div>
-      <label for="signal-output">Invito o risposta da condividere</label>
-      <textarea
-        id="signal-output"
-        readonly
-        rows="3"
-        aria-label="Invito o risposta da condividere"
-      ></textarea>
-      <button id="copy-signal" class="button small">
-        Copia invito o risposta
+      <button id="cancel-join" class="text-button" hidden>
+        Annulla collegamento
       </button>
-      <label for="signal-input">Host: incolla la risposta del collega</label>
-      <textarea id="signal-input" rows="3" maxlength="50000"></textarea>
-      <button id="accept-answer" class="button small">
-        Collega il collega
-      </button>
+      <section
+        id="signal-panel"
+        class="signal-panel"
+        hidden
+        aria-labelledby="signal-heading"
+      >
+        <p class="eyebrow">UN LINK PER TUTTA LA SQUADRA</p>
+        <h3 id="signal-heading">Invita i tuoi amici.</h3>
+        <div class="room-share">
+          <img
+            id="room-qr"
+            width="144"
+            height="144"
+            alt="QR per aprire questa stanza"
+            hidden
+          />
+          <div>
+            <p>
+              Scansionate il QR o aprite il link. Fino a 8 persone, host
+              incluso.
+            </p>
+            <label for="signal-output">Link della stanza</label>
+            <input id="signal-output" readonly aria-label="Link della stanza" />
+            <button id="copy-signal" class="button gold full">
+              Copia link stanza
+            </button>
+          </div>
+        </div>
+      </section>
       <details class="local-help">
-        <summary>Come giocare senza server</summary>
+        <summary>Come funziona il collegamento</summary>
         <p>
-          1. L’host crea la stanza e genera un invito diverso per ogni collega.
-          2. Il collega incolla l’invito e preme Entra, poi restituisce la
-          risposta. 3. L’host incolla la risposta e collega il collega.
+          Una persona crea la stanza e condivide lo stesso link o QR con gli
+          amici. Scegliete le squadre: l’host avvia il turno per tutti. Tenete
+          aperta la sua scheda: chiuderla termina la partita.
         </p>
         <p>
-          Restate sulla stessa rete LAN e tenete aperta la scheda dell’host.
-          Nessun account, server di gioco o servizio di collegamento. Alcune
-          reti ospiti isolano i dispositivi e impediscono la connessione. La
-          chiusura dell’host termina la partita.
+          La rete condivisa è consigliata. Potete provare anche da reti diverse,
+          ma alcuni router o firewall impediscono il collegamento diretto. Anche
+          reti ospiti e hotspot con isolamento dei dispositivi possono
+          bloccarlo.
+        </p>
+        <p>
+          PeerJS Cloud mette in contatto i browser usando identificativi casuali
+          e dati tecnici di connessione. Il nome e la partita viaggiano fra i
+          giocatori; il QR viene generato qui. Non serve un account. Se il
+          servizio di collegamento si interrompe, le partite già collegate
+          possono continuare.
         </p>
       </details>
     </dialog>

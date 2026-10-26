@@ -1996,3 +1996,541 @@ textarea {
 .score-heading span {
   white-space: nowrap;
 }
+
+/* Nightshift polish: useful states, restrained motion, one action at a time. */
+.lobby-dialog {
+  width: min(600px, calc(100vw - 32px));
+  padding: 28px;
+}
+.lobby-dialog h2 {
+  margin: 14px 0 10px;
+  font-size: clamp(26px, 4vw, 34px);
+}
+.lobby-intro {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+.lobby-steps {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+.lobby-steps li {
+  flex: 1;
+  font:
+    11px ui-monospace,
+    monospace;
+  color: #8298aa;
+  padding: 0 0 12px;
+  border-bottom: 2px solid transparent;
+}
+.lobby-steps li span {
+  display: block;
+  font:
+    12px "Trebuchet MS",
+    sans-serif;
+  margin-top: 6px;
+}
+.lobby-steps [aria-current="step"] {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.lobby-dialog .code-line {
+  margin: 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+.lobby-dialog .code-line strong {
+  font:
+    700 14px "Trebuchet MS",
+    sans-serif;
+  color: var(--mint);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.lobby-dialog .code-line .button {
+  font-size: 12px;
+  min-height: 40px;
+}
+.lobby-dialog .connection-status {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-left: 2px solid var(--mint);
+  border-radius: 0 6px 6px 0;
+  background: #8bd5c208;
+  margin: 14px 0;
+}
+.lobby-dialog .connection-status:empty {
+  display: none;
+}
+.connection-status[data-busy="true"] {
+  border-left-color: var(--gold);
+}
+.team-picker {
+  gap: 12px;
+  margin: 14px 0;
+}
+.team-picker button {
+  position: relative;
+  min-height: 112px;
+  padding: 16px 68px 16px 16px;
+  overflow: hidden;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.2s;
+}
+.team-picker button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.team-picker button img {
+  position: absolute;
+  right: 5px;
+  bottom: 0;
+  width: 62px;
+  height: 80px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.team-picker button strong {
+  font-size: 19px;
+  position: relative;
+}
+.team-picker button span {
+  position: relative;
+  display: block;
+  max-width: 150px;
+  font-size: 11px;
+}
+.team-picker button[aria-pressed="true"] {
+  box-shadow: inset 0 -3px 0 var(--mint);
+}
+.team-picker button[data-team="spies"][aria-pressed="true"] {
+  box-shadow: inset 0 -3px 0 #d4b0f4;
+}
+.lobby-dialog .roster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 0;
+}
+.lobby-dialog .roster li {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12px;
+  background: #091725;
+}
+.lobby-dialog .roster small {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--mint);
+}
+.lobby-dialog #host-help {
+  font-size: 12px;
+  margin: 10px 0 16px;
+}
+.signal-panel,
+.answer-panel {
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0c1a29;
+}
+.signal-panel h3,
+.answer-panel h3 {
+  margin: 8px 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.signal-panel p:not(.eyebrow) {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 8px 0 16px;
+}
+.signal-panel .eyebrow,
+.answer-panel .eyebrow {
+  font-size: 10px;
+  margin: 0;
+}
+.signal-details {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.signal-details summary {
+  cursor: pointer;
+  min-height: 32px;
+  padding-top: 8px;
+}
+.signal-details textarea {
+  font:
+    11px/1.5 ui-monospace,
+    monospace;
+}
+.answer-panel label {
+  font-size: 12px;
+  margin-top: 14px;
+}
+.answer-panel textarea {
+  font-size: 12px;
+  min-height: 64px;
+}
+#cancel-invites {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.lobby-dialog .local-help {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.lobby-dialog .local-help summary {
+  min-height: 32px;
+  cursor: pointer;
+}
+.race-mode .dossier-intro,
+.race-mode #chapters,
+.race-mode #chapter-year {
+  display: none;
+}
+.race-mode .chapter-description {
+  padding-top: 4px;
+}
+.race-mode .chapter-description h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.race-score {
+  margin: 16px 0 20px;
+}
+.score-heading {
+  display: grid;
+  gap: 5px;
+}
+.score-heading span {
+  color: #f5ead3;
+  font:
+    700 18px ui-monospace,
+    monospace;
+}
+.team-score {
+  padding: 13px;
+  background: #102334;
+  border-radius: 10px;
+}
+.team-score.yours {
+  box-shadow: inset 0 -2px 0 var(--team);
+}
+.mission-list {
+  margin-top: 14px;
+}
+.mission-list li {
+  border: 0;
+  margin-bottom: 10px;
+}
+.mission-button {
+  border: 1px solid #30475b;
+  border-radius: 10px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  background: #102030;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
+  overflow: hidden;
+}
+.mission-button:before {
+  top: 18px;
+}
+.mission-button.selected {
+  border-color: var(--gold);
+  background: #243443;
+}
+.mission-button.done {
+  border-color: #45766e;
+  background: #102d30;
+}
+.mission-button small {
+  margin-top: 8px;
+  color: #a9becb;
+}
+.mission-meter {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--mint) var(--done),
+    transparent var(--done)
+  );
+}
+.mission-state {
+  display: block;
+  color: var(--mint);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-top: 8px;
+}
+.header-progress progress {
+  height: 8px;
+}
+.place-marker.selected {
+  box-shadow:
+    0 0 0 3px #f6bc5733,
+    0 6px 18px #0005;
+}
+.destination {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 16px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: destination-beacon 1.6s ease-in-out infinite;
+}
+.destination span {
+  position: absolute;
+  top: 19px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  background: #071421e8;
+  color: var(--gold);
+  border-radius: 4px;
+  padding: 3px 7px;
+}
+@keyframes destination-beacon {
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 7px #f6bc5722;
+  }
+}
+.activity-step-meter {
+  width: 100%;
+  height: 5px;
+  accent-color: var(--mint);
+  display: block;
+  margin: 0 0 20px;
+}
+.activity {
+  border-color: #425d70;
+  box-shadow:
+    0 6px 20px #0002,
+    inset 0 1px 0 #ffffff08;
+}
+.activity legend.sr-only {
+  margin: 0;
+}
+.activity-status {
+  background: #07172280;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 14px 0;
+}
+.calibration-display {
+  min-height: 100px;
+}
+.calibration-target {
+  text-align: right;
+  font:
+    12px/1.5 ui-monospace,
+    monospace;
+}
+.route-cell.current {
+  box-shadow:
+    inset 0 0 0 2px #8bd5c2,
+    0 0 16px #8bd5c220;
+}
+.collect-cell.collected {
+  animation: collected-confirm 0.25s ease-out;
+}
+@keyframes collected-confirm {
+  50% {
+    transform: scale(0.92);
+  }
+}
+#event-feedback:not(:empty) {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #152c32;
+  border-left: 2px solid var(--mint);
+}
+#event-feedback[data-kind="error"]:not(:empty) {
+  background: #30282b;
+  border-color: #e8a28b;
+  color: #f0beac;
+}
+.event-complete {
+  padding: 10px 14px;
+  border: 1px solid #4d8073;
+  background: #17382f;
+  border-radius: 8px;
+}
+.victory-dialog {
+  box-shadow: 0 24px 90px #0009;
+}
+button:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+@media (max-width: 600px) {
+  .lobby-dialog {
+    padding: 20px;
+  }
+  .lobby-dialog h2 {
+    font-size: 28px;
+  }
+  .lobby-intro {
+    font-size: 13px;
+  }
+  .team-picker button {
+    padding: 13px 42px 12px 12px;
+    min-height: 105px;
+  }
+  .team-picker button img {
+    width: 43px;
+    height: 61px;
+    right: 0;
+  }
+  .team-picker button span {
+    font-size: 10px;
+  }
+  .team-picker strong {
+    font-size: 17px;
+  }
+  .lobby-steps {
+    margin: 16px 0;
+  }
+  .signal-panel,
+  .answer-panel {
+    padding: 14px;
+  }
+  .race-mode .chapter-description h2 {
+    margin-left: 0;
+  }
+  .mission-list li {
+    min-width: 220px;
+    border-left: 0;
+  }
+  .mission-button {
+    padding-left: 34px;
+    min-height: 105px;
+  }
+  .race-score {
+    margin: 0 0 18px;
+  }
+  .score-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .score-heading span {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+#progress-count {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#cancel-join {
+  display: block;
+  margin: 14px auto 0;
+  min-height: 36px;
+}
+.activity[data-state="error"] {
+  border-color: #dd9d85;
+}
+.activity[data-state="error"] .activity-status {
+  color: #f5bda6;
+  background: #3c2929;
+}
+@media (max-width: 600px) {
+  .header-progress {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .header-progress > div {
+    width: 100%;
+    min-width: 0;
+  }
+  .header-progress progress {
+    width: 100%;
+  }
+  .header-actions .button {
+    min-height: 40px;
+  }
+}
+/* One reusable room link; QR is generated locally. */
+.room-share {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.room-share > img {
+  flex: 0 0 144px;
+  border-radius: 12px;
+  background: white;
+}
+.room-share > div {
+  min-width: 0;
+  flex: 1;
+}
+.room-share input {
+  width: 100%;
+  font-size: 12px;
+  margin: 6px 0 10px;
+}
+.network-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #cbd4e6;
+  border-left: 2px solid #e9bd73;
+  padding-left: 12px;
+  margin: 18px 0 8px;
+}
+@media (max-width: 540px) {
+  .room-share {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .room-share > img {
+    width: 104px;
+    height: 104px;
+    flex-basis: 104px;
+  }
+  .room-share p {
+    font-size: 12px;
+  }
+}

@@ -8,15 +8,18 @@ La versione attuale è statica: singolo e gara a squadre WebRTC funzionano su Gi
 
 ### Personale contro Spie in LAN (2–8)
 
-1. Tutti aprono il sito HTTPS sulla stessa rete. L’host sceglie **Gioca con gli amici → Crea una stanza**.
-2. L’host genera un invito distinto per ciascun collega e lo condivide privatamente.
-3. Il collega apre il link oppure lo incolla nel campo invito, inserisce il nome e preme **Entra**. Copia la risposta mostrata e la restituisce all’host.
-4. L’host incolla la risposta e preme **Collega il collega**, poi ciascuno sceglie **Personale** o **Spie**. Serve almeno una persona per squadra per avviare.
-5. Vince chi completa per primo **tutte** le proprie missioni: 4 per il Personale, 3 per le Spie. La schermata finale appare a tutti; solo l’host può avviare la rivincita, mantenendo le squadre e azzerando entrambe le progressioni.
+1. L’host apre il sito HTTPS e sceglie **Gioca con gli amici → Crea una stanza**.
+2. Condivide **lo stesso link o QR** con tutti (fino a 7 ospiti). Gli amici aprono il link, inseriscono il nome e premono **Entra**: nessuna risposta da copiare.
+3. Ciascuno sceglie **Personale** o **Spie**. Serve almeno una persona per squadra; l’host avvia il turno.
+4. Vince chi completa per primo **tutte** le proprie missioni: 4 per il Personale, 3 per le Spie. La schermata finale appare a tutti; solo l’host può avviare la rivincita.
 
-Gli inviti non collegati possono essere annullati senza espellere i presenti. Non servono account, server di gioco, signaling, STUN o TURN. La connessione avviene direttamente fra browser tramite DataChannel WebRTC. L’host verifica risposte e progressi. Una persona può entrare anche dopo l’avvio.
+**Giocate sulla stessa rete Wi-Fi oppure collegatevi all’hotspot di un amico. Serve una connessione Internet per entrare nella stanza.** La rete condivisa è consigliata: anche reti diverse possono funzionare, ma NAT o firewall restrittivi possono impedirlo. Reti ospiti e hotspot con isolamento dei dispositivi possono bloccare il collegamento.
 
-**L’host deve tenere aperta la scheda**: se la chiude la partita termina, senza trasferimento automatico. I progressi della gara restano in memoria; il diario singolo salvato non viene sovrascritto. Reti ospiti con isolamento dei dispositivi, firewall o browser che impediscono WebRTC possono bloccare il collegamento. Il test eseguito usa due schede reali sullo stesso computer; non certifica ogni router LAN o browser mobile. Gli inviti contengono dati di collegamento: condividili solo con i partecipanti.
+PeerJS Cloud offre il servizio di incontro fra browser; riceve identificativi casuali e dati tecnici di connessione. STUN aiuta il collegamento diretto; nessun TURN è configurato e non è garantito il funzionamento su qualsiasi rete. Nomi e partita viaggiano sul DataChannel WebRTC, senza metadata personali al broker. Il QR viene generato localmente. L’host verifica risposte e progressi; una persona può entrare anche dopo l’avvio. Se il broker si scollega, i canali già aperti restano attivi e viene tentata la riconnessione per gli inviti.
+
+**L’host deve tenere aperta la scheda**: se la chiude la partita termina, senza trasferimento automatico. La gara resta in memoria; il diario singolo salvato non viene sovrascritto. Il link è una chiave di accesso alla stanza: condividilo solo con chi vuoi invitare. Le prove reali usano più schede sullo stesso computer; non certificano dispositivi o reti fisiche diverse.
+
+PeerJS **1.5.5** e QRCode **1.5.4** sono inclusi in `js/vendor` con licenze MIT; nessun CDN runtime. `package-lock.json` fissa le dipendenze. Per rigenerare: `npm ci && npm run vendor`. La configurazione del broker è isolata in `js/peer-config.js` per un eventuale PeerServer futuro; non è necessario installarne uno per giocare.
 
 ### Anteprima e build
 

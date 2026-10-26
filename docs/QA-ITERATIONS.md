@@ -74,3 +74,9 @@
 - Fonti specifiche nei sette dossier; Slotin distinto da Daghlian e datato 1946, Trinity distinto da Los Alamos, Rosenberg non presentato come dipendente del laboratorio. Attività scientifiche astratte e inventate.
 - Prove visive in `docs/screenshots/team-race-desktop.jpg`, `spies-victory.jpg`, `team-victory-mobile.jpg`, `team-route-mobile.jpg`.
 - Limiti: nessun test tra dispositivi fisici diversi o su ogni router/browser; host obbligatoriamente presente, nessuna migrazione né anticheat forte.
+
+### 27 ottobre — PeerJS + rifinitura UI
+- Collegamento automatico con unico link stanza e QR locale (PeerJS 1.5.5, QRCode 1.5.4 vendorizzati, licenze incluse). Indicazione Wi-Fi/hotspot e Internet visibile nella lobby.
+- Tre schede reali collegate tramite lo stesso invito: squadre, avvio, intera missione Rosenberg e conteggi verificati. Rientro tardivo e uscita host verificati. Layout 390px e desktop controllati.
+- Corretti salvataggio solo dopo perdita host, canali tardivi, posti tecnici bloccati da connessioni mai aperte, messaggio di ripristino broker. Test di regressione RED→GREEN, suite 40/40, check/build riusciti.
+- Pubblicazione del lotto in corso sul ramo esistente; nessun merge. Nessun test su hardware/reti fisiche distinti. Revisioni aggiuntive già registrate dal coordinamento per il lotto successivo.

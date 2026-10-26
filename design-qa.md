@@ -84,3 +84,15 @@ Verifiche: due schede reali locali con progressi e movimento condivisi; due sche
 - Test gaps: real separate LAN hardware, every browser/router and full assistive-technology testing remain unverified.
 
 final result: passed
+
+## 2026-10-27 — Motion, dossier and automatic room links
+
+Target retained: `docs/screenshots/selected-direction.png`, existing night campus and chibi assets. The dossier now distinguishes selected/completed missions, reduces redundant headings and exposes per-step progress. Arrival, success and retry cues run on events, preserve focus, and honor both reduced-motion settings. Mobile header progress no longer wraps its counter.
+
+Manual invite/answer UI replaced by a reusable room link and locally generated QR. Same Wi-Fi/hotspot advice plus Internet requirement are visible above entry controls. Host opens only after broker readiness; busy/cancel/error states are explicit. Names stay in the application data-channel handshake.
+
+Evidence: `docs/screenshots/peerjs-lobby-390.jpg`, `peerjs-game-desktop.jpg`; earlier UI baseline `lobby-before-390.jpg`. Real Cloud validation on three local browser tabs: same URL admitted two guests, team selection/start synchronized, Rosenberg activity completed through all three interactions; Spies partner saw completed card and 1/3, opposing host saw only 1/3 score. Late rejoin retained room scores. Host exit returned latest guest UI to the main menu with explanation. 390px lobby/QR and game header inspected; no console errors in final local host.
+
+Fresh review led to regression tests and fixes for solo journal preservation after host loss and late incoming channels after closure. Separate multiplayer review identified unopened PeerJS channels leaking technical slots; cleanup is now explicit/idempotent and tested against close semantics of the pinned library. Broker reconnection attempt and guest status restoration tested. Full suite: 40/40; syntax/build pass.
+
+Limits: multi-tab validation on one computer, not physical phones or separate networks. No TURN, no guarantee for restrictive NAT/firewall/isolated Wi-Fi. PeerJS Cloud and Internet required for new room entry. Browser host must stay open; no host migration. A subsequent authorized quality batch covers additional visual and activity UX findings; this release preserves mission rules and historical content.
