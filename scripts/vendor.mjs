@@ -21,7 +21,7 @@ for (const [name, contents] of Object.entries({
     const match = input.match(/^(node_modules\/(?:@[^/]+\/)?[^/]+)\//);
     if (match) packages.add(match[1]);
   }
-  await copyFile(`node_modules/${name}/LICENSE`, `js/vendor/${name}.LICENSE`);
+  await copyFile(`node_modules/${name}/${name === "qrcode" ? "license" : "LICENSE"}`, `js/vendor/${name}.LICENSE`);
 }
 
 const notices = [];
