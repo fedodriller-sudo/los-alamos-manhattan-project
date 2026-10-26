@@ -70,4 +70,3 @@ I test usano il runner Node integrato. Quelli multiplayer aprono connessioni esc
 I moduli della precedente versione sono conservati per consultazione, ma non vengono caricati dal nuovo punto d'ingresso. La nuova modalità cooperativa sostituisce spie, votazioni ed espulsioni con episodi condivisi.
 
 Le illustrazioni originali in `img/campus-night.png`, `img/scientist-chibi.png` e `img/researcher-chibi.png` sono generate per questa revisione. Non sono fotografie o documenti storici. Nessuna dipendenza grafica esterna viene caricata dal browser.
-

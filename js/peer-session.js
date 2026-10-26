@@ -45,7 +45,11 @@ export class PeerSession {
     });
   }
   write(ch, m) {
-    if (ch?.readyState === "open" && ch.bufferedAmount < 65536)
+    if (
+      ch?.readyState === "open" &&
+      ((m.type !== "move" && m.type !== "player_move") ||
+        ch.bufferedAmount < 65536)
+    )
       ch.send(JSON.stringify(m));
   }
   send(raw) {
