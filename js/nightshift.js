@@ -228,7 +228,7 @@ function makeAvatar(p, self) {
   const n = el("div", "avatar " + (self ? "self" : "remote"));
   const img = el("img");
   img.src =
-    p.color % 2 ? "img/researcher-chibi.png" : "img/scientist-chibi.png";
+    p.color % 2 ? "img/researcher-chibi.webp" : "img/scientist-chibi.webp";
   img.alt = "";
   // An outline/name color identifies people without recoloring the historical white coats.
   const colors = [
@@ -1320,7 +1320,7 @@ for (let i = 0; i < 3; i++) {
   const npc = document.createElement("div");
   npc.className = "campus-colleague colleague-" + i;
   const img = document.createElement("img");
-  img.src = i % 2 ? "./img/researcher-chibi.png" : "./img/scientist-chibi.png";
+  img.src = i % 2 ? "./img/researcher-chibi.webp" : "./img/scientist-chibi.webp";
   img.alt = "";
   npc.append(img);
   scenery.append(npc);

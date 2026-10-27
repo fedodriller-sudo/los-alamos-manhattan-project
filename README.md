@@ -41,7 +41,7 @@ Il vecchio server Node è conservato per consultazione e test di regressione, ma
 - Nel **Diario** trovi fatti documentati, fonti e limiti della ricostruzione.
 - Nelle **Impostazioni** regoli suoni, volume e movimento ridotto. Il sistema rispetta anche `prefers-reduced-motion`.
 
-Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Su HTTPS/localhost il service worker conserva gli asset per l’esplorazione offline dopo il primo caricamento. Il collegamento multiplayer richiede che il browser host resti raggiungibile.
+Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Su HTTPS/localhost, dopo il download completo del pacchetto e la successiva apertura, il gioco è disponibile in cache per l’esplorazione offline. Una cache completa viene letta subito, anche se la rete resta in attesa. Gli aggiornamenti vengono preparati in background e attivati quando tutte le schede della versione precedente sono chiuse; nessuna partita viene ricaricata automaticamente. Il collegamento multiplayer richiede che il browser host resti raggiungibile.
 
 Il campus comprende colleghi in movimento, particelle notturne, animazioni di respiro e camminata, transizioni e movimento libero con un tocco. Le animazioni decorative si disattivano con movimento ridotto. Gli NPC sono comparse artistiche, senza attribuzioni a persone storiche.
 
@@ -82,3 +82,9 @@ Il Personale completa tre campioni stabili con deriva del segnale, un percorso c
 I dettagli dei progressi vengono inviati soltanto ai compagni; gli avversari ricevono i conteggi delle missioni completate. L’host conserva lo stato autorevole e accetta solo le risposte della squadra del mittente, nel turno e passaggio correnti. Come ogni gioco statico ospitato da un partecipante, non offre protezione anticheat contro un host modificato o un client che ispeziona il codice pubblico.
 
 La gara è una finzione storica: il dossier distingue i fatti dalle attività inventate, include fonti per Fuchs, Rosenberg e Seborer e precisa che l’incidente di Slotin risale al 1946. Le scale, i campioni e le sequenze sono simbolici.
+
+### Distribuzione e immagini
+
+La build genera `dist/sw.js` con identificativo derivato dai contenuti e hash SHA-256 di ogni risorsa in `scripts/assets.mjs`. L’installazione accetta soltanto un pacchetto completo e coerente; un aggiornamento incompleto conserva la versione precedente. Le cache obsolete del gioco vengono eliminate all’attivazione, senza toccare altri siti. Una risorsa mancante può essere recuperata solo se corrisponde alla stessa versione, con attesa massima di 3 secondi; se non è disponibile viene restituito un errore esplicito. Il vecchio worker v6 mantiene il proprio comportamento fino alla naturale attivazione del nuovo.
+
+I PNG originali restano nel repository. Il pacchetto pubblico usa tre WebP a dimensioni invariate: campus 1536×1024 di alta qualità, personaggi 1254×1254 senza perdita, con trasparenze e pixel identici. Rigenerazione facoltativa con `sh scripts/optimize-images.sh` e libwebp/cwebp 1.6.0; nessun convertitore viene richiesto al browser o alla build ordinaria. Le tre immagini passano da 5.333.788 a 1.907.224 byte (−64,24%). La misura riguarda i byte, non un tempo di caricamento misurato su rete fisica.

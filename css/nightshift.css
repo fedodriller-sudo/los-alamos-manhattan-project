@@ -173,7 +173,7 @@ summary:focus-visible,
 .welcome-art {
   position: absolute;
   inset: 0;
-  background-image: url("../img/campus-night.png");
+  background-image: url("../img/campus-night.webp");
   background-size: cover;
   background-position: 65% center;
   opacity: 0.65;
