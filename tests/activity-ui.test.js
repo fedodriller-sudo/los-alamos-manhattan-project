@@ -156,3 +156,45 @@ test("hidden collection expiry requests no audio and offers restart", (t) => {
   );
   assert.ok(f.find((n) => n.textContent === "Ricomincia raccolta"));
 });
+
+const collectionStep = {
+  activity: "collect",
+  size: 4,
+  targets: [1, 3, 6, 8, 10, 14],
+};
+function collectAll(f) {
+  f.find((n) => n.textContent === "Avvia raccolta").onclick();
+  for (const i of collectionStep.targets)
+    f.find((n) => n.attrs["aria-label"] === `Contrassegno ${i + 1}`).onclick();
+  return f.find((n) => n.textContent === "Deposita raccolta");
+}
+test("valid collection deposit retries unchanged after timeout without restarting timer", (t) => {
+  const f = fixture(t, collectionStep),
+    confirm = collectAll(f);
+  f.tick(1000);
+  confirm.onclick();
+  f.clean.setPending(true);
+  confirm.onclick();
+  assert.equal(f.submitted.length, 1);
+  const status = f.find((n) => n.className === "activity-status").textContent;
+  f.tick(25000);
+  f.clean.setPending(false);
+  assert.equal(confirm.disabled, false);
+  confirm.onclick();
+  assert.equal(f.submitted.length, 2);
+  assert.deepEqual(f.submitted[0], collectionStep.targets);
+  assert.deepEqual(f.submitted[1], f.submitted[0]);
+  assert.equal(
+    f.find((n) => n.className === "activity-status").textContent,
+    status,
+  );
+});
+test("collection expired before first deposit cannot submit completed selection", (t) => {
+  const f = fixture(t, collectionStep),
+    confirm = collectAll(f);
+  f.tick(21000);
+  f.clean.setPending(false);
+  confirm.onclick();
+  assert.equal(confirm.disabled, true);
+  assert.equal(f.submitted.length, 0);
+});

@@ -281,6 +281,7 @@ export function renderActivity(
       grid,
     );
     let active = false,
+      deposited = false,
       remaining = 20,
       exposure = 0,
       deadline = 0;
@@ -292,8 +293,14 @@ export function renderActivity(
     const confirm = button(
       "Deposita raccolta",
       () => {
-        if (active && selected.size === step.targets.length) {
+        if (pending || disposed) return;
+        if (
+          selected.size === step.targets.length &&
+          (deposited || (active && performance.now() < deadline))
+        ) {
+          deposited = true;
           active = false;
+          update();
           finish([...selected]);
         }
       },
@@ -303,6 +310,7 @@ export function renderActivity(
       "Avvia raccolta",
       () => {
         selected.clear();
+        deposited = false;
         exposure = 0;
         remaining = 20;
         deadline = performance.now() + 20000;
@@ -313,7 +321,8 @@ export function renderActivity(
       "button full",
     );
     const update = () => {
-      confirm.disabled = !active || selected.size !== step.targets.length;
+      confirm.disabled =
+        (!active && !deposited) || selected.size !== step.targets.length;
       root.dataset.state =
         exposure >= 5 || remaining === 0 ? "error" : "active";
       meter.value = exposure;

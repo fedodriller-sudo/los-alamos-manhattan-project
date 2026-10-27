@@ -90,3 +90,5 @@
 - Verifiche browser: nome errato conservato→correzione→passaggio successivo; sequenza errata conservata→reset→completamento sincronizzato; progressi avversari/nuovi ingressi non cancellano il testo; copia pausa/ripresa/100%/ritiro; modalità gara/solo; notifiche1280x720,1024x768,390x844. Screenshot con prefisso `feel-`.
 - 52/52 test superati, check/build riusciti. Test aggiunti RED→GREEN per stato locale, timeout, audio, background e focus. Sistemato un test del vecchio server che scambiava la chiusura locale del socket per conferma della rimozione nella stanza.
 - Limiti: background/timeout/audio verificati anche con tempo e DOM controllati, senza test hardware audio o VoiceOver; dispositivi fisici e zoom testo non certificati. Regole e fonti storiche invariate.
+
+- Ricontrollo indipendente: trovato e corretto il deposito raccolta inerte dopo timeout/rifiuto. Uno stato distinto conserva un deposito valido e consente il reinvio degli stessi sei contrassegni senza riavviare il timer; pending blocca duplicati e una raccolta scaduta prima del primo deposito resta non consegnabile. Riproduzione RED→GREEN; suite finale 54/54, check/build riusciti.
