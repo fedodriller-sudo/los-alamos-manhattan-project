@@ -77,3 +77,75 @@ test("guest has no host commands before game and can re-enter an active turn", (
   assert.equal(active("start-button").disabled, false);
   assert.equal(active("start-button").textContent, "Rientra nel turno");
 });
+
+for (const button of ["copy-invite", "copy-signal"])
+  test(`clipboard success is reported beside ${button} inside the lobby`, async () => {
+    const nodes = new Map(),
+      $ = (id) => {
+        if (!nodes.has(id)) nodes.set(id, { value: "", textContent: "" });
+        return nodes.get(id);
+      };
+    $("signal-output").value = "https://example.test/#room=demo";
+    $("connection-status").textContent = "Connected";
+    let copied;
+    const context = {
+      $,
+      navigator: {
+        clipboard: {
+          writeText: async (value) => {
+            copied = value;
+          },
+        },
+      },
+      toast() {},
+    };
+    const copy = source.slice(
+      source.indexOf("async function copyInvite("),
+      source.indexOf('$("copy-signal").onclick'),
+    );
+    vm.runInNewContext(copy, context);
+    await context.copyInvite({ currentTarget: { id: button } });
+    assert.equal(copied, $("signal-output").value);
+    assert.match($(button + "-feedback").textContent, /Link copiato/);
+    assert.equal($("connection-status").textContent, "Connected");
+  });
+test("clipboard fallback selects the link and explains manual copy beside it", async () => {
+  const nodes = new Map(),
+    $ = (id) => {
+      if (!nodes.has(id)) nodes.set(id, { value: "", textContent: "" });
+      return nodes.get(id);
+    };
+  let focused = false,
+    selected = false;
+  Object.assign($("signal-output"), {
+    value: "https://example.test/#room=demo",
+    focus() {
+      focused = true;
+    },
+    select() {
+      selected = true;
+    },
+  });
+  $("connection-status").textContent = "Connected";
+  const context = {
+    $,
+    navigator: {
+      clipboard: {
+        writeText: async () => {
+          throw new Error("denied");
+        },
+      },
+    },
+    toast() {},
+  };
+  const copy = source.slice(
+    source.indexOf("async function copyInvite("),
+    source.indexOf('$("copy-signal").onclick'),
+  );
+  vm.runInNewContext(copy, context);
+  await context.copyInvite({ currentTarget: { id: "copy-invite" } });
+  assert.equal(focused, true);
+  assert.equal(selected, true);
+  assert.match($("copy-signal-feedback").textContent, /Copia manualmente/);
+  assert.equal($("connection-status").textContent, "Connected");
+});

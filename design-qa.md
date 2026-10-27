@@ -133,3 +133,8 @@ Real connected browser checks: erroneous recipient preserved through rejection a
 - Rilascio `5a9b6ff` verificato: CI/Pages verdi,22asset pubblici identici a dist. Due schede pubbliche via link; nuova lobby con invito specifico e avvio, percorso completo da tastiera a360px, OUT conservato al traguardo, Consegna→registro e console host senza errori/avvisi. Screenshot `access-public-invite-360.jpg` e `access-public-route-ready-360.jpg`.
 
 - Ricontrollo indipendente regioni live: rimossi due assignment residui dopo update() che duplicavano il testo di scadenza/quinto errore raccolta. Due test dedicati riprodotti RED2→GREEN1 scrittura per evento, senza ulteriori scritture nei tick successivi. Suite finale77/77, check/build riusciti. Nessuna variazione visiva rispetto agli screenshot del lotto.
+
+### 27 ottobre — conferma copia link nella lobby
+- Il toast esterno al dialogo modale non era visibile. La copia ora annuncia il risultato in una regione status accanto al pulsante usato, dentro la lobby; fallback manuale accanto al campo selezionato. Messaggi separati da connessione e roster; svuotati all’uscita, risposta asincrona ignorata se il link cambia.
+- Tre regressioni RED→GREEN: successo dai due pulsanti e fallback con focus/selezione del link. Suite80/80, check/build riusciti. Browser390px: conferma visibile sia nel comando primario sia nel pannelloQR, screenshot `copy-feedback-*`. Fallback negato verificato con clipboard simulata; non alterati permessi del browser.
+- Segue un solo collaudo integrato della release pubblicata: riferimento diario, tre partecipanti, vittorie alternate, diario invariato dopo riapertura. Nessun azzeramento storage o progresso artificiale.

@@ -248,7 +248,19 @@
           </button>
         </div>
         <p id="host-help" class="subtle" role="status"></p>
-        <button id="copy-invite" class="button full">Copia link stanza</button>
+        <button
+          id="copy-invite"
+          class="button full"
+          aria-describedby="copy-invite-feedback"
+        >
+          Copia link stanza
+        </button>
+        <p
+          id="copy-invite-feedback"
+          class="copy-feedback"
+          role="status"
+          aria-atomic="true"
+        ></p>
         <ul id="roster" class="roster"></ul>
         <button id="start-button" class="button gold full">
           Avvia il turno
@@ -280,9 +292,19 @@
             </p>
             <label for="signal-output">Link della stanza</label>
             <input id="signal-output" readonly aria-label="Link della stanza" />
-            <button id="copy-signal" class="button full">
+            <button
+              id="copy-signal"
+              class="button full"
+              aria-describedby="copy-signal-feedback"
+            >
               Copia link stanza
             </button>
+            <p
+              id="copy-signal-feedback"
+              class="copy-feedback"
+              role="status"
+              aria-atomic="true"
+            ></p>
           </div>
         </div>
       </section>

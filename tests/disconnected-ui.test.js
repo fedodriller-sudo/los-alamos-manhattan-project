@@ -72,7 +72,13 @@ test("unexpected host loss exits race without saving over solo journal", () => {
 
 test("closing a room clears the link, QR and stale ready message", () => {
   const nodes = new Map(
-    ["signal-output", "connection-status", "room-qr"].map((id) => [
+    [
+      "signal-output",
+      "connection-status",
+      "room-qr",
+      "copy-invite-feedback",
+      "copy-signal-feedback",
+    ].map((id) => [
       id,
       {
         value: "old link",

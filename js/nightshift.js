@@ -922,6 +922,8 @@ function disconnect() {
   signalingBusy = false;
   signalGeneration++;
   $("signal-output").value = "";
+  $("copy-invite-feedback").textContent = "";
+  $("copy-signal-feedback").textContent = "";
   $("connection-status").textContent = "";
   $("room-qr").hidden = true;
   $("room-qr").removeAttribute("src");
@@ -1191,16 +1193,27 @@ async function signalAction(action) {
     }
   }
 }
-async function copyInvite() {
+async function copyInvite(event) {
   const output = $("signal-output");
   if (!output.value) return;
+  const link = output.value;
+  const feedback = $(
+    event?.currentTarget?.id === "copy-signal"
+      ? "copy-signal-feedback"
+      : "copy-invite-feedback",
+  );
+  $("copy-invite-feedback").textContent = "";
+  $("copy-signal-feedback").textContent = "";
   try {
-    await navigator.clipboard.writeText(output.value);
-    toast("Link copiato. Condividi lo stesso link con tutti gli amici.");
+    await navigator.clipboard.writeText(link);
+    if (output.value !== link) return;
+    feedback.textContent = "Link copiato. Condividilo con tutti gli amici.";
   } catch {
+    if (output.value !== link) return;
     output.focus();
     output.select();
-    toast("Link selezionato: copialo e condividilo con gli amici.");
+    $("copy-signal-feedback").textContent =
+      "Copia manualmente il link selezionato: usa Copia oppure Ctrl+C / ⌘C, poi condividilo con gli amici.";
   }
 }
 $("copy-signal").onclick = copyInvite;
