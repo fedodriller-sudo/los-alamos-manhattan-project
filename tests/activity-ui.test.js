@@ -294,3 +294,25 @@ test("route distinguishes free adjacent moves and preserves distant goal/obstacl
   assert.equal(cell(15).textContent, "OUT");
   assert.match(cell(15).attrs["aria-label"], /segnalino, uscita/);
 });
+
+for (const failure of ["expiry", "exposure"])
+  test(`collection ${failure} announces its terminal error exactly once`, (t) => {
+    const f = fixture(t, collectionStep),
+      status = f.find((n) => n.className === "activity-status");
+    f.find((n) => n.textContent === "Avvia raccolta").onclick();
+    if (failure === "exposure")
+      for (let i = 0; i < 4; i++)
+        f.find((n) => n.attrs["aria-label"] === "Settore vuoto 1").onclick();
+    status.writes = [];
+    if (failure === "expiry") f.tick(20000);
+    else f.find((n) => n.attrs["aria-label"] === "Settore vuoto 1").onclick();
+    assert.equal(status.writes.length, 1);
+    assert.match(
+      status.textContent,
+      failure === "expiry"
+        ? /Tempo scaduto/
+        : /Esposizione simbolica al limite/,
+    );
+    f.tick(21000);
+    assert.equal(status.writes.length, 1);
+  });

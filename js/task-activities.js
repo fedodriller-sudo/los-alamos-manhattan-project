@@ -378,9 +378,6 @@ export function renderActivity(
             }
             if (exposure >= 5) active = false;
             update();
-            if (!active)
-              status.textContent =
-                "Esposizione simbolica al limite. Ricomincia la raccolta.";
           },
           "collect-cell" + (target ? " marked" : ""),
         );
@@ -401,9 +398,6 @@ export function renderActivity(
         sound("wrong");
       }
       update();
-      if (!active)
-        status.textContent =
-          "Tempo scaduto. Ricomincia e deposita prima del limite.";
     }, 200);
   }
   if (step.activity === "gate") {

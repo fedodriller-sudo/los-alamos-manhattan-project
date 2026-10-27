@@ -16,3 +16,5 @@ Scope from accessibility-followup.md and visual-review.md points4–5; quality w
 - Limiti: misurate mutazioni testuali del vero renderer con DOM/tempo controllati, non annunci vocali di VoiceOver; nessuna certificazione lettori di schermo o dispositivi fisici.
 
 - Rilascio `5a9b6ff` verificato: CI/Pages verdi,22asset pubblici identici a dist. Due schede pubbliche via link; nuova lobby con invito specifico e avvio, percorso completo da tastiera a360px, OUT conservato al traguardo, Consegna→registro e console host senza errori/avvisi. Screenshot `access-public-invite-360.jpg` e `access-public-route-ready-360.jpg`.
+
+- Ricontrollo indipendente regioni live: rimossi due assignment residui dopo update() che duplicavano il testo di scadenza/quinto errore raccolta. Due test dedicati riprodotti RED2→GREEN1 scrittura per evento, senza ulteriori scritture nei tick successivi. Suite finale77/77, check/build riusciti. Nessuna variazione visiva rispetto agli screenshot del lotto.
