@@ -1,12 +1,12 @@
 {
-  "name": "Manhattan Project — Los Alamos",
+  "name": "Los Alamos · Il turno di notte",
   "short_name": "Los Alamos",
-  "description": "Project Y: obiettivi, minigiochi e multigiocatore (product design dossier).",
+  "description": "Storie di laboratorio documentate, esplorazione cartoon e cooperativa locale.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0c1018",
-  "theme_color": "#141a24",
+  "background_color": "#071421",
+  "theme_color": "#091727",
   "orientation": "any",
   "icons": [
     {

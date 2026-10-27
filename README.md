@@ -1,97 +1,90 @@
-# Manhattan Project — Los Alamos
+# Los Alamos — Il turno di notte
 
-Gioco stile **Among Us** sulla **Technical Area 1** (Manhattan Project / Project Y).
+Un piccolo gioco browser in italiano: esplora una Los Alamos cartoon notturna e attraversa otto episodi ispirati alla vita del laboratorio tra il 1943 e il 1945. La campagna singola è facile, senza timer. In LAN si gioca **Personale contro Spie, da 2 a 8 persone**, con attività brevi e ripetibili.
 
-## Avvio — gioco singolo
+## Gioca dal browser
 
-```bash
-cd project-y-game
-python3 serve.py
+La versione attuale è statica: singolo e gara a squadre WebRTC funzionano su GitHub Pages, senza Node sul computer dei giocatori. Il workflow **Publish browser game** esegue test, crea il pacchetto pubblico e pubblica con GitHub Actions dai rami `codex/los-alamos-nightshift` e `main`. Il proprietario ha attivato Pages con sorgente GitHub Actions.
+
+### Personale contro Spie in LAN (2–8)
+
+1. L’host apre il sito HTTPS e sceglie **Gioca con gli amici → Crea una stanza**.
+2. Condivide **lo stesso link o QR** con tutti (fino a 7 ospiti). Gli amici aprono il link, inseriscono il nome e premono **Entra**: nessuna risposta da copiare.
+3. Ciascuno sceglie **Personale** o **Spie**. Serve almeno una persona per squadra; l’host avvia il turno.
+4. Vince chi completa per primo **tutte** le proprie missioni: 4 per il Personale, 3 per le Spie. La schermata finale appare a tutti; solo l’host può avviare la rivincita.
+
+**Giocate sulla stessa rete Wi-Fi oppure collegatevi all’hotspot di un amico. Serve una connessione Internet per entrare nella stanza.** La rete condivisa è consigliata: anche reti diverse possono funzionare, ma NAT o firewall restrittivi possono impedirlo. Reti ospiti e hotspot con isolamento dei dispositivi possono bloccare il collegamento.
+
+PeerJS Cloud offre il servizio di incontro fra browser; riceve identificativi casuali e dati tecnici di connessione. STUN aiuta il collegamento diretto; nessun TURN è configurato e non è garantito il funzionamento su qualsiasi rete. Nomi e partita viaggiano sul DataChannel WebRTC, senza metadata personali al broker. Il QR viene generato localmente. L’host verifica risposte e progressi; una persona può entrare anche dopo l’avvio. Se il broker si scollega, i canali già aperti restano attivi e viene tentata la riconnessione per gli inviti.
+
+**L’host deve tenere aperta la scheda**: se la chiude la partita termina, senza trasferimento automatico. La gara resta in memoria; il diario singolo salvato non viene sovrascritto. Il link è una chiave di accesso alla stanza: condividilo solo con chi vuoi invitare. Le prove reali usano più schede sullo stesso computer; non certificano dispositivi o reti fisiche diverse.
+
+PeerJS **1.5.5** e QRCode **1.5.4** sono inclusi in `js/vendor` con licenze MIT; nessun CDN runtime. `package-lock.json` fissa le dipendenze. Per rigenerare: `npm ci && npm run vendor`. La configurazione del broker è isolata in `js/peer-config.js` per un eventuale PeerServer futuro; non è necessario installarne uno per giocare.
+
+### Anteprima e build
+
+```sh
+npm run build
+python3 -m http.server 8877 --bind 127.0.0.1 --directory dist
 ```
 
-Apri **http://127.0.0.1:8765**
+Apri http://localhost:8877. Node 20+ è necessario solo per build e test; Python è un’opzione per servire l’anteprima statica. Il pacchetto `dist` contiene esclusivamente gli asset pubblici. I percorsi relativi supportano la sottocartella del repository su Pages.
 
-### Installa come app (Product Design incluso)
+Il vecchio server Node è conservato per consultazione e test di regressione, ma la nuova interfaccia non usa WebSocket e il server non viene pubblicato.
 
-Non c’è un’app separata «Product Design» da scaricare: l’interfaccia dossier (obiettivi + minigiochi) è già in `mission-ui.js` e `css/product-design.css`.
+## Come si gioca
 
-1. Avvia il server come sopra.
-2. Nel menu principale usa **Installa app** (Chrome/Edge su desktop o Android), oppure dal menu del browser **Installa / Aggiungi a schermo Home**.
-3. Su **iPhone**: Condividi → Aggiungi a Home (il service worker non si registra in locale su `127.0.0.1`; per offline piena installa da un URL HTTPS in rete).
+- **WASD/frecce** per muoverti, **E** per interagire.
+- Tocca un episodio o un luogo per raggiungerlo automaticamente; durante il tragitto puoi usare il pulsante di interazione per arrivare subito.
+- Scegli una risposta, consulta un indizio se vuoi e riprova senza penalità.
+- Completa un capitolo per sbloccare il successivo: 1943, 1944, 1945.
+- Nel **Diario** trovi fatti documentati, fonti e limiti della ricostruzione.
+- Nelle **Impostazioni** regoli suoni, volume e movimento ridotto. Il sistema rispetta anche `prefers-reduced-motion`.
 
-Il multigiocatore richiede comunque il server Node (`server/`) raggiungibile da tutti i giocatori.
+Il turno singolo si salva sul browser dopo ogni risposta corretta. **Riprendi il diario salvato** recupera i progressi. Su HTTPS/localhost, dopo il download completo del pacchetto e la successiva apertura, il gioco è disponibile in cache per l’esplorazione offline. Una cache completa viene letta subito, anche se la rete resta in attesa. Gli aggiornamenti vengono preparati in background e attivati quando tutte le schede della versione precedente sono chiuse; nessuna partita viene ricaricata automaticamente. Il collegamento multiplayer richiede che il browser host resti raggiungibile.
 
-## Avvio — multigiocatore online
+Il campus comprende colleghi in movimento, particelle notturne, animazioni di respiro e camminata, transizioni e movimento libero con un tocco. Le animazioni decorative si disattivano con movimento ridotto. Gli NPC sono comparse artistiche, senza attribuzioni a persone storiche.
 
-Serve **Node.js** sul computer che fa da host (stessa porta del sito + WebSocket):
+## Accuratezza storica
 
-```bash
-cd project-y-game/server
-npm install
-npm start
+Gli avatar, le azioni, gli appunti selezionabili e i dialoghi sono inventati. **La mappa è artistica**, non una planimetria della Technical Area. Gli episodi collegano ogni fatto alle fonti; le datazioni non precise e le collocazioni narrative sono dichiarate.
+
+Il gioco tratta l'accoglienza dei ricercatori, le lezioni di Robert Serber, la biblioteca di Charlotte Serber, la manutenzione delle calcolatrici, il lavoro con le schede perforate, un ricordo di Feynman sulla recinzione e la notizia di Trinity. Il finale include gli abitanti allontanati e le conseguenze del test sulle comunità vicine. Non simula la costruzione di armi o procedure sperimentali reali.
+
+Fonti e note editoriali: [docs/HISTORY.md](docs/HISTORY.md).
+
+## Verifica e sviluppo
+
+```sh
+npm test
+npm run check
 ```
 
-1. Tutti aprono lo **stesso URL** (es. `http://192.168.1.10:8765` se l’host è sulla LAN).
-2. Dal menu: **Multigiocatore online** → un giocatore **Crea stanza** e condivide il **codice a 6 caratteri**.
-3. Gli altri inseriscono codice + nome e **Entra**.
-4. L’**host** avvia quando ci sono almeno **3** giocatori.
+Ogni push o pull request esegue anche GitHub Actions su Node 20, 22 e 24.
 
-### Come funziona (MVP)
+I test usano il runner Node integrato. Quelli multiplayer aprono connessioni esclusivamente loopback: richiedono un ambiente che consenta socket locali.
 
-- Obiettivi del **personale condivisi** nella stanza (una missione completata vale per tutti).
-- Vedi gli **altri giocatori** muoversi sulla mappa.
-- **~30% spie** e **~70% personale** (minimo **3** giocatori per avviare).
-- **Riunione d’emergenza**: voto per espellere un sospetto; se espelli tutte le spie vince il personale.
-- Mappa ampia **3600×2700** senza etichette: i luoghi si vedono come pin; nome e descrizione nel pannello vicino / missioni.
-- La spia sincronizza furto intel e dispatch con il server.
-- **Non** c’è ancora: anti-cheat, reconnect in partita, sabotaggi.
-- Il salvataggio **localStorage** è disattivato in modalità online.
+- `js/history-data.js`: episodi, scelte e fonti.
+- `js/progress.js`: avanzamento deterministico condiviso da client e server.
+- `js/nightshift.js`: interfaccia, movimento, audio, salvataggio e rete.
+- `css/nightshift.css`: layout responsive e stili.
+- `server/game-server.js`: file pubblici, stanze e sincronizzazione autorevole.
+- `tests/`: progressione e integrazione con client WebSocket reali.
 
-## Stato (v0.4)
+I moduli della precedente versione sono conservati per consultazione, ma non vengono caricati dal nuovo punto d'ingresso. La gara a squadre usa missioni separate e un vincitore comune a tutti i client; non include votazioni o espulsioni. Il vecchio server WebSocket resta solo per regressione.
 
-- Ruoli: **Personale del Progetto** vs **Spia sovietica**
-- **3 missioni ★** critiche alla Direzione Project Y
-- Spia: copia documenti + **Dispatch a Mosca**
-- Vittoria staff: **12** obiettivi (su **100+** missioni) + **3** critici ★
-- **Importante:** apri via HTTP (non doppio-click su `index.html`)
+Le illustrazioni originali in `img/campus-night.png`, `img/scientist-chibi.png` e `img/researcher-chibi.png` sono generate per questa revisione. Non sono fotografie o documenti storici. Nessuna dipendenza grafica esterna viene caricata dal browser.
 
-## Prossimi passi
+### Le sette missioni di squadra
 
-- Riunioni d’emergenza sincronizzate / votazione
-- Sabotaggi (ruolo dedicato)
-- S-Site, V-Site, Gun Site come seconda mappa
+Il Personale completa tre campioni stabili con deriva del segnale, un percorso con ostacoli e registro, una raccolta con deposito entro un limite simbolico, e otto controlli dei pass. Le Spie completano copia/nascondimento di un fascicolo, destinatario/timbro/consegna e sequenze di archivio. Gli errori consentono di riprovare.
 
-Obiettivi definiti in `js/tasks-data.js`.
+I dettagli dei progressi vengono inviati soltanto ai compagni; gli avversari ricevono i conteggi delle missioni completate. L’host conserva lo stato autorevole e accetta solo le risposte della squadra del mittente, nel turno e passaggio correnti. Come ogni gioco statico ospitato da un partecipante, non offre protezione anticheat contro un host modificato o un client che ispeziona il codice pubblico.
 
-## Pubblicare su GitHub
+La gara è una finzione storica: il dossier distingue i fatti dalle attività inventate, include fonti per Fuchs, Rosenberg e Seborer e precisa che l’incidente di Slotin risale al 1946. Le scale, i campioni e le sequenze sono simbolici.
 
-Il progetto è già un repository Git in questa cartella (`main` con commit iniziale).
+### Distribuzione e immagini
 
-### 1. Crea il repository su GitHub
+La build genera `dist/sw.js` con identificativo derivato dai contenuti e hash SHA-256 di ogni risorsa in `scripts/assets.mjs`. L’installazione accetta soltanto un pacchetto completo e coerente; un aggiornamento incompleto conserva la versione precedente. Le cache obsolete del gioco vengono eliminate all’attivazione, senza toccare altri siti. Una risorsa mancante può essere recuperata solo se corrisponde alla stessa versione, con attesa massima di 3 secondi; se non è disponibile viene restituito un errore esplicito. Il vecchio worker v6 mantiene il proprio comportamento fino alla naturale attivazione del nuovo.
 
-1. Vai su [github.com/new](https://github.com/new).
-2. Nome suggerito: `manhattan-project-los-alamos` (o come preferisci).
-3. **Non** aggiungere README, `.gitignore` o licenza (li hai già in locale).
-4. Crea il repository vuoto.
-
-### 2. Collega e carica dal terminale
-
-Sostituisci `TUO-USER` e `NOME-REPO`:
-
-```bash
-cd /Users/fedya/enderlight-end/project-y-game
-git remote add origin https://github.com/TUO-USER/NOME-REPO.git
-git push -u origin main
-```
-
-Con **GitHub CLI** (se installi `gh` e fai `gh auth login`):
-
-```bash
-cd /Users/fedya/enderlight-end/project-y-game
-gh repo create NOME-REPO --public --source=. --remote=origin --push
-```
-
-### Giocare online da GitHub
-
-- **GitHub Pages** può servire solo i file statici: il **multigiocatore** (WebSocket) richiede un server Node sempre acceso (Railway, Render, Fly.io, VPS, o il tuo PC con `npm start`).
-- In locale o su un VPS: `cd server && npm install && npm start` e apri la porta **8765**.
+I PNG originali restano nel repository. Il pacchetto pubblico usa tre WebP a dimensioni invariate: campus 1536×1024 di alta qualità, personaggi 1254×1254 senza perdita, con trasparenze e pixel identici. Rigenerazione facoltativa con `sh scripts/optimize-images.sh` e libwebp/cwebp 1.6.0; nessun convertitore viene richiesto al browser o alla build ordinaria. Le tre immagini passano da 5.333.788 a 1.907.224 byte (−64,24%). La misura riguarda i byte, non un tempo di caricamento misurato su rete fisica.
