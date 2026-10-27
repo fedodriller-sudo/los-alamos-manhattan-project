@@ -2217,6 +2217,11 @@ textarea {
   min-height: 32px;
   cursor: pointer;
 }
+.role-picker .role-stories {
+  grid-column: 1 / -1;
+  min-height: 0;
+  padding-right: 16px;
+}
 .race-mode .dossier-intro,
 .race-mode #chapters,
 .race-mode #chapter-year {

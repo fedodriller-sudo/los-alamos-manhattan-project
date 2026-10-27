@@ -68,19 +68,19 @@ export const TEAM_MISSIONS = [
     id: "demon-core-stabilize",
     team: "personnel",
     place: "physics",
-    title: "Demon Core · memoria e sicurezza",
+    title: "Demon Core · il cacciavite e le tre misure",
     date: "1945–1946 · ricostruzione simbolica",
     kind: "Banco strumenti",
     intro:
-      "Un pannello didattico ricorda i due incidenti. Registra tre segnali sulla scala colorata: il banco è inventato e non controlla materiali nucleari.",
+      "Un pannello didattico ricorda i due incidenti (Daghlian 1945, Slotin 1946). Tieni fermo il «cacciavite» sulla scala colorata e registra tre misure stabili: il banco è inventato e non controlla materiali nucleari.",
     fact: "Gli incidenti di Harry Daghlian (1945) e Louis Slotin (21 maggio 1946) furono distinti. Quello di Slotin avvenne dopo la guerra; non fu una ripetizione della stessa disposizione di mattoni.",
     adaptation:
       "Le tre tarature sono un gioco astratto di precisione. Non rappresentano una soglia di criticità, una geometria o una procedura reale.",
     source: safety,
     steps: [
-      calibration(35, "Registro 1 · allinea il segnale alla fascia 35"),
-      calibration(65, "Registro 2 · allinea il segnale alla fascia 65"),
-      calibration(50, "Registro 3 · completa la verifica alla fascia 50"),
+      calibration(35, "Misura 1 · stabilizza il cacciavite sulla fascia 35"),
+      calibration(65, "Misura 2 · stabilizza il cacciavite sulla fascia 65"),
+      calibration(50, "Misura 3 · tieni il cacciavite fermo sulla fascia 50"),
     ],
   },
   {

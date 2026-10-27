@@ -56,7 +56,7 @@
           </p>
           <div class="welcome-actions">
             <button id="solo-button" class="button gold large">
-              Inizia il tuo turno →</button
+              Scegli il tuo ruolo →</button
             ><button id="coop-button" class="button large">
               Gioca con gli amici
             </button>
@@ -65,7 +65,7 @@
             Riprendi il diario salvato
           </button>
           <div class="welcome-meta">
-            <span>8 episodi documentati</span
+            <span>Personale o scienziato spia sovietica</span
             ><span>Solo o Personale contro Spie · 2–8</span
             ><span>Facile, senza fretta</span>
           </div>
@@ -329,6 +329,32 @@
           possono continuare.
         </p>
       </details>
+    </dialog>
+    <dialog id="role-dialog" class="dialog role-dialog" aria-labelledby="role-title">
+      <div class="dialog-top">
+        <span class="eyebrow">IN SOLITARIA · SCEGLI IL RUOLO</span
+        ><button class="close-button" data-close aria-label="Chiudi">×</button>
+      </div>
+      <h2 id="role-title">Chi sei stanotte?</h2>
+      <p class="lobby-intro">
+        Stesso campus, stesso camice. Cambiano soltanto le missioni.
+      </p>
+      <div class="team-picker role-picker" role="group" aria-label="Scegli il ruolo">
+        <button type="button" data-solo="personnel" data-team="personnel">
+          <img src="img/scientist-chibi.webp" alt="" aria-hidden="true" /><strong
+            >Personale</strong
+          ><span>Demon Core, glove box, sabbia di Trinity, controllo all’ingresso</span>
+        </button>
+        <button type="button" data-solo="spies" data-team="spies">
+          <img src="img/researcher-chibi.webp" alt="" aria-hidden="true" /><strong
+            >Scienziato spia sovietica</strong
+          ><span>Klaus Fuchs, Julius Rosenberg, Oscar Seborer</span>
+        </button>
+        <button type="button" data-solo="stories" class="role-stories">
+          <strong>Storie del diario</strong
+          ><span>8 episodi documentati, 1943–1945</span>
+        </button>
+      </div>
     </dialog>
     <dialog
       id="victory-dialog"

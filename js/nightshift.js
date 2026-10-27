@@ -21,6 +21,8 @@ const chapterUnlocked = (p, c) => unlockedFor(p, c, EVENTS);
 const completedCount = (p) => countFor(p, EVENTS);
 const restoreProgress = (p) => restoreFor(p, EVENTS);
 let pendingEventId = null;
+let soloTeam = null,
+  soloStartedAt = 0;
 let activityCleanup = () => {},
   shownWinnerRound = null;
 const $ = (id) => document.getElementById(id);
@@ -210,8 +212,11 @@ function highestChapter() {
     if (chapterUnlocked(progress, i)) c = i;
   return c;
 }
+function saveKey() {
+  return soloTeam ? SAVE + ":" + soloTeam : SAVE;
+}
 function persist() {
-  if (!online && !write(SAVE, progress))
+  if (!online && !write(saveKey(), progress))
     toast(
       "Il browser non consente il salvataggio. Puoi continuare questo turno.",
     );
@@ -273,7 +278,9 @@ function renderAvatars() {
 function render() {
   const count = completedCount(progress);
   $("progress-label").textContent =
-    room?.mode === "race" ? "Missioni della tua squadra" : "Il nostro diario";
+    room?.mode === "race" || (!online && soloTeam)
+      ? "Missioni della tua squadra"
+      : "Il nostro diario";
   $("total-progress").max = EVENTS.length;
   $("total-progress").value = count;
   $("progress-count").textContent = count + " / " + EVENTS.length;
@@ -393,11 +400,15 @@ function render() {
     ? room?.mode === "race"
       ? TEAMS[ownTeam()]?.name || "Squadra"
       : "Squadra cooperativa"
-    : "In solitaria";
+    : soloTeam
+      ? TEAMS[soloTeam].name + " · in solitaria"
+      : "In solitaria";
   $("room-label").textContent =
     online && room
       ? "SQUADRA · " + room.players.length + "/8"
-      : "TURNO PERSONALE";
+      : soloTeam === "spies"
+        ? "COPERTURA · SPIA SOVIETICA"
+        : "TURNO PERSONALE";
   $("invite-button").hidden = !online;
   $("gather-button").hidden = !online;
   $("presence").textContent =
@@ -420,6 +431,7 @@ function clearInvite() {
   history.replaceState(null, "", url);
 }
 function startSolo(resume = false) {
+  soloTeam = null;
   useSoloCatalog();
   clearInvite();
   disconnect();
@@ -449,7 +461,38 @@ function begin() {
   $("map").focus({ preventScroll: true });
   sound("success");
 }
-$("solo-button").onclick = () => startSolo(false);
+function startSoloTeam(team) {
+  clearInvite();
+  disconnect();
+  online = false;
+  room = null;
+  yourId = null;
+  soloTeam = team;
+  useSoloTeamCatalog(team);
+  progress = restoreProgress(read(saveKey()));
+  if (completedCount(progress) === EVENTS.length) progress = freshProgress();
+  soloStartedAt = Date.now();
+  chapter = 0;
+  player = {
+    x: 49,
+    y: 57,
+    name: "Tu",
+    color: team === "spies" ? 1 : 0,
+  };
+  begin();
+  toast(
+    team === "spies"
+      ? "Copertura attiva: completa le tre operazioni della rete sovietica."
+      : "Turno del Personale: completa le quattro missioni del laboratorio.",
+  );
+}
+$("solo-button").onclick = () => show("role-dialog");
+for (const b of document.querySelectorAll("[data-solo]"))
+  b.onclick = () => {
+    $("role-dialog").close();
+    if (b.dataset.solo === "stories") startSolo(false);
+    else startSoloTeam(b.dataset.solo);
+  };
 $("resume-button").onclick = () => startSolo(true);
 function exit() {
   clearInvite();
@@ -461,6 +504,7 @@ function exit() {
   disconnect();
   online = false;
   room = null;
+  soloTeam = null;
   useSoloCatalog();
   progress = restoreProgress(read(SAVE));
   $("journal-count").textContent = completedCount(progress);
@@ -510,7 +554,7 @@ function updateNearby() {
   if (!playing) return;
   const n = nearestEvent();
   const near = n && distance(n.p) < 12;
-  const race = room?.mode === "race";
+  const race = room?.mode === "race" || (!online && !!soloTeam);
   const destination =
     target?.eventId && EVENTS.find((e) => e.id === target.eventId);
   const complete = completedCount(progress) === EVENTS.length;
@@ -863,8 +907,10 @@ function submitAnswer(e, n, i) {
     if (result.complete) {
       const next = highestChapter();
       if (next > chapter) toast("Sbloccato il capitolo " + CHAPTERS[next].year);
-      if (completedCount(progress) === EVENTS.length)
-        toast("Diario completo: otto storie, una memoria condivisa.");
+      if (completedCount(progress) === EVENTS.length) {
+        if (soloTeam) setTimeout(showSoloVictory, 900);
+        else toast("Diario completo: otto storie, una memoria condivisa.");
+      }
     }
   } else {
     sound("wrong");
@@ -1407,6 +1453,47 @@ function useRoomCatalog() {
   chapter = 0;
   document.body.classList.add("race-mode");
   document.body.dataset.team = team;
+}
+function useSoloTeamCatalog(team) {
+  EVENTS = missionsFor(team);
+  CHAPTERS = [
+    {
+      year: TEAMS[team].name,
+      title: team === "spies" ? "Le operazioni della rete" : "Le tue missioni",
+      subtitle: TEAMS[team].subtitle,
+    },
+  ];
+  document.body.classList.add("race-mode");
+  document.body.dataset.team = team;
+  $("race-score").hidden = true;
+}
+function showSoloVictory() {
+  if (!soloTeam || online) return;
+  for (const d of document.querySelectorAll("dialog[open]")) d.close();
+  const spies = soloTeam === "spies";
+  $("victory-dialog").dataset.winner = soloTeam;
+  $("victory-kicker").textContent = "MISSIONI COMPLETATE";
+  $("victory-title").textContent = spies
+    ? "La rete sovietica ha i suoi documenti"
+    : "Il laboratorio è al sicuro";
+  $("victory-copy").textContent = spies
+    ? "Hai completato le operazioni di Fuchs, Rosenberg e Seborer. Nel diario trovi i fatti documentati e come finirono queste vicende."
+    : "Hai completato Demon Core, glove box, Trinity e il controllo all’ingresso. Nel diario trovi i fatti documentati di ogni missione.";
+  $("victory-scores").replaceChildren(
+    el(
+      "p",
+      "",
+      TEAMS[soloTeam].name + " · " + EVENTS.length + " / " + EVENTS.length + " missioni",
+    ),
+  );
+  const sec = Math.floor((Date.now() - soloStartedAt) / 1000);
+  $("victory-time").textContent =
+    Math.floor(sec / 60) + " min " + String(sec % 60).padStart(2, "0") + " s";
+  $("rematch-button").hidden = true;
+  $("victory-host-note").textContent =
+    "Dal menu puoi provare l’altro ruolo: stesso campus, missioni diverse.";
+  show("victory-dialog");
+  sound("success");
 }
 function syncRoomProgress() {
   useRoomCatalog();
