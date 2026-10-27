@@ -92,3 +92,5 @@
 - Limiti: background/timeout/audio verificati anche con tempo e DOM controllati, senza test hardware audio o VoiceOver; dispositivi fisici e zoom testo non certificati. Regole e fonti storiche invariate.
 
 - Ricontrollo indipendente: trovato e corretto il deposito raccolta inerte dopo timeout/rifiuto. Uno stato distinto conserva un deposito valido e consente il reinvio degli stessi sei contrassegni senza riavviare il timer; pending blocca duplicati e una raccolta scaduta prima del primo deposito resta non consegnabile. Riproduzione RED→GREEN; suite finale 54/54, check/build riusciti.
+
+- Pubblicazione del lotto verificata su `63336cb`: CI e Pages riusciti; cinque asset pubblici identici byte per byte a dist. Due schede HTTPS entrate dallo stesso link, gara avviata; destinatario errato preservato dopo rifiuto e correzione avanzata al timbro. Console guest senza avvisi/errori. Prova `docs/screenshots/feel-public-retry.jpg`.
