@@ -20,6 +20,7 @@ const attempt = (p, id, choice) => attemptFor(p, id, choice, EVENTS);
 const chapterUnlocked = (p, c) => unlockedFor(p, c, EVENTS);
 const completedCount = (p) => countFor(p, EVENTS);
 const restoreProgress = (p) => restoreFor(p, EVENTS);
+let pendingEventId = null;
 let activityCleanup = () => {},
   shownWinnerRound = null;
 const $ = (id) => document.getElementById(id);
@@ -83,13 +84,15 @@ const prefs = {
       : matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
 function toast(text) {
+  const destination = playing ? $("game-notice") : document.body;
+  if ($("toast").parentElement !== destination) destination.append($("toast"));
   $("toast").textContent = text;
   $("toast").hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => ($("toast").hidden = true), 4500);
 }
 function sound(kind = "tap") {
-  if (!prefs.sound) return;
+  if (!prefs.sound || document.hidden) return;
   try {
     if (!audio) {
       audio = new (window.AudioContext || window.webkitAudioContext)();
@@ -507,23 +510,36 @@ function updateNearby() {
   if (!playing) return;
   const n = nearestEvent();
   const near = n && distance(n.p) < 12;
-  $("nearby-name").textContent = target?.eventId
-    ? "Verso " +
-      PLACES.find(
-        (p) => p.id === EVENTS.find((e) => e.id === target.eventId).place,
-      ).name
+  const race = room?.mode === "race";
+  const destination =
+    target?.eventId && EVENTS.find((e) => e.id === target.eventId);
+  const complete = completedCount(progress) === EVENTS.length;
+  $("nearby-name").textContent = destination
+    ? race
+      ? destination.title
+      : "Verso " + PLACES.find((p) => p.id === destination.place).name
     : near
-      ? n.p.name
-      : completedCount(progress) === EVENTS.length
-        ? "Tutte le storie nel diario"
-        : "Scegli una storia nel dossier";
-  $("interact-button").textContent = target?.eventId
-    ? "In cammino…"
+      ? race
+        ? n.e.title
+        : n.p.name
+      : complete
+        ? race
+          ? "Missioni della squadra completate"
+          : "Tutte le storie nel diario"
+        : race && n
+          ? n.e.title
+          : "Scegli una storia nel dossier";
+  $("interact-button").textContent = destination
+    ? "Raggiungi ora"
     : near
-      ? "Interagisci [E]"
-      : completedCount(progress) === EVENTS.length
+      ? race
+        ? "Apri missione [E]"
+        : "Interagisci [E]"
+      : complete
         ? "Apri il diario"
-        : "Prossimo episodio";
+        : race
+          ? "Prossima missione"
+          : "Prossimo episodio";
 }
 $("interact-button").onclick = () => {
   if (target?.eventId) {
@@ -575,19 +591,28 @@ function openEvent(e) {
   $("event-feedback").textContent = "";
 }
 function renderEvent() {
-  activityCleanup();
-  activityCleanup = () => {};
   const e = EVENTS.find((e) => e.id === activeEvent);
   if (!e) return;
+  const n = progress.steps[e.id] || 0;
+  const stepKey = e.id + ":" + n;
+  if (activityCleanup.key === stepKey && activityCleanup.isActive?.()) {
+    activityCleanup.setPending(pending);
+    return;
+  }
+  activityCleanup();
+  activityCleanup = () => {};
   $("event-date").textContent = e.date;
   $("event-kind").textContent =
     e.kind + " · " + PLACES.find((p) => p.id === e.place).name;
   $("event-title").textContent = e.title;
   $("event-intro").textContent = e.intro;
+  $("event-context").open = !matchMedia("(max-width: 600px)").matches;
+  $("event-context-label").textContent =
+    room?.mode === "race"
+      ? "Contesto della missione"
+      : "La storia di questo episodio";
   const content = $("event-content");
   content.replaceChildren();
-  const n = progress.steps[e.id] || 0;
-  const stepKey = e.id + ":" + n;
   if (content.dataset.step !== stepKey) {
     content.dataset.step = stepKey;
     cue(content, "enter");
@@ -600,7 +625,13 @@ function renderEvent() {
   $("event-hint").hidden = n >= e.steps.length;
   if (n >= e.steps.length) {
     content.append(
-      el("span", "event-complete", "Episodio aggiunto al diario"),
+      el(
+        "span",
+        "event-complete",
+        room?.mode === "race"
+          ? "Missione completata · nel diario"
+          : "Episodio aggiunto al diario",
+      ),
       factContent(e),
     );
     const next = EVENTS.find(
@@ -609,7 +640,11 @@ function renderEvent() {
     const b = el(
       "button",
       "button gold full",
-      next ? "Prossima storia →" : "Apri il diario completo",
+      next
+        ? room?.mode === "race"
+          ? "Prossima missione →"
+          : "Prossima storia →"
+        : "Apri il diario completo",
     );
     b.onclick = () => {
       if (next) {
@@ -642,8 +677,32 @@ function renderEvent() {
         submit: (choice) => submitAnswer(e, n, choice),
         begin: () => send("activity_begin", { eventId: e.id, step: n }),
       }) || (() => {});
+    activityCleanup.key = stepKey;
+    if ($("event-dialog").open && document.activeElement === document.body)
+      question.focus({ preventScroll: true });
     return;
   }
+  // Keep sequence selections and ordinary answers mounted during host acknowledgement too.
+  const controls = el("fieldset", "event-controls");
+  controls.setAttribute("aria-label", s.prompt);
+  controls.disabled = pending;
+  content.append(controls);
+  let mounted = true,
+    pendingFocus = null;
+  activityCleanup = () => {
+    mounted = false;
+  };
+  activityCleanup.key = stepKey;
+  activityCleanup.isActive = () => mounted;
+  activityCleanup.setPending = (value) => {
+    if (value && controls.contains(document.activeElement))
+      pendingFocus = document.activeElement;
+    controls.disabled = value;
+    if (!value && pendingFocus && document.activeElement === document.body) {
+      pendingFocus.focus({ preventScroll: true });
+      pendingFocus = null;
+    }
+  };
   if (s.interaction === "compare") {
     const table = el("table", "comparison-table");
     const caption = el("caption", "", "Dati inventati · prova di confronto");
@@ -667,20 +726,19 @@ function renderEvent() {
     content.append(table);
   }
   if (s.interaction === "sequence") {
-    renderSequence(e, n, s, content);
+    renderSequence(e, n, s, controls);
     if (document.activeElement === document.body)
       question.focus({ preventScroll: true });
     return;
   }
   s.options.forEach((label, i) => {
     const b = el("button", "answer");
-    b.disabled = pending;
     b.append(
       el("span", "", String.fromCharCode(65 + i)),
       document.createTextNode(label),
     );
     b.onclick = () => submitAnswer(e, n, i);
-    content.append(b);
+    controls.append(b);
   });
   if ($("event-dialog").open && document.activeElement === document.body)
     question.focus({ preventScroll: true });
@@ -705,7 +763,7 @@ function renderSequence(e, n, s, content) {
     choices.replaceChildren();
     for (const i of [2, 0, 1]) {
       const b = el("button", "answer", s.options[i]);
-      b.disabled = pending || order.includes(i);
+      b.disabled = order.includes(i);
       b.onclick = () => {
         order.push(i);
         sound();
@@ -716,8 +774,8 @@ function renderSequence(e, n, s, content) {
       };
       choices.append(b);
     }
-    check.disabled = pending || order.length !== 3;
-    reset.disabled = pending || order.length === 0;
+    check.disabled = order.length !== 3;
+    reset.disabled = order.length === 0;
   };
   reset.onclick = () => {
     $("event-feedback").textContent = "";
@@ -731,14 +789,15 @@ function renderSequence(e, n, s, content) {
   content.append(picked, choices, status, actions);
   refresh();
 }
-function updateProgress(p, eventId, by) {
+function updateProgress(p, eventId, by, audible = true) {
   const previousActiveStep = activeEvent ? progress.steps[activeEvent] : null;
   const before = completedCount(progress);
   progress = restoreProgress(p);
   persist();
   const after = completedCount(progress);
   if (after > before) {
-    sound("success");
+    if (audible && !(room?.mode === "race" && after === EVENTS.length))
+      sound("success");
     const e = EVENTS.find((e) => e.id === eventId);
     toast((by ? by + ": " : "") + (e ? e.title : "Episodio") + " · nel diario");
     if (
@@ -779,7 +838,9 @@ function submitAnswer(e, n, i) {
       return;
     }
     pending = true;
+    pendingEventId = e.id;
     renderEvent();
+    $("event-feedback").textContent = "Invio all’host…";
     clearTimeout(answerTimer);
     answerTimer = setTimeout(() => {
       pending = false;
@@ -989,9 +1050,14 @@ function receive(m) {
     return;
   }
   if (m.type === "answer_result") {
-    clearTimeout(answerTimer);
-    pending = false;
-    updateProgress(m.progress, m.eventId);
+    if (!pending || pendingEventId === m.eventId) clearTimeout(answerTimer);
+    const relevant = !pending || pendingEventId === m.eventId;
+    if (relevant) {
+      pending = false;
+      pendingEventId = null;
+    }
+    updateProgress(m.progress, m.eventId, undefined, false);
+    if (activeEvent && activeEvent !== m.eventId) return;
     if (!m.ok) renderEvent();
     if (activeEvent) {
       $("event-feedback").textContent = m.ok
@@ -1004,7 +1070,14 @@ function receive(m) {
     }
     cue($("event-dialog"), m.ok ? "success" : "error");
     $("event-feedback").dataset.kind = m.ok ? "success" : "error";
-    sound(m.ok ? "success" : "wrong");
+    if (
+      !(
+        m.ok &&
+        room?.mode === "race" &&
+        completedCount(progress) === EVENTS.length
+      )
+    )
+      sound(m.ok ? "success" : "wrong");
     return;
   }
   if (m.type === "progress") {

@@ -162,6 +162,7 @@ test("rooms cap at eight players and release a seat after departure", async (t) 
     clients.push(c);
     c.send("join_room", { code: room.code, name: "R" + i });
     assert.equal((await c.next("room_joined")).room.players.length, i + 1);
+    assert.equal((await host.next("room_update")).room.players.length, i + 1);
   }
   const extra = await client(server.wsUrl);
   clients.push(extra);
@@ -172,6 +173,8 @@ test("rooms cap at eight players and release a seat after departure", async (t) 
     departing.ws.once("close", done);
     departing.ws.close();
   });
+  // The departing socket closing locally can precede server-side membership removal.
+  assert.equal((await host.next("room_update")).room.players.length, 7);
   extra.send("join_room", { code: room.code, name: "Nuovo" });
   assert.equal((await extra.next("room_joined")).room.players.length, 8);
 });

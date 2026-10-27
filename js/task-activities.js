@@ -29,6 +29,11 @@ export function renderActivity(
   { submit, sound, begin, pending = false },
 ) {
   if (!step.activity) return null;
+  const playSound = sound;
+  sound = (kind) => {
+    if (!document.hidden) playSound(kind);
+  };
+  let onVisibility = () => {};
   const root = node("fieldset", "activity " + step.activity);
   root.disabled = pending;
   root.append(node("legend", "sr-only", step.prompt));
@@ -97,7 +102,7 @@ export function renderActivity(
       }
       root.dataset.state = failed ? "error" : "active";
       meter.value = stable;
-      confirm.disabled = pending || holding || !ready;
+      confirm.disabled = holding || !ready;
       confirm.textContent = holding
         ? "Mantieni il segnale…"
         : failed
@@ -114,6 +119,7 @@ export function renderActivity(
     update();
     let phase = 0;
     timer = setInterval(() => {
+      if (pending) return;
       phase += 0.1;
       drift = Math.sin(phase) * 3;
       update(0.1);
@@ -142,7 +148,7 @@ export function renderActivity(
       const ready =
         Math.abs(Number(x.input.value) - 50) <= 5 &&
         Math.abs(Number(y.input.value) - 50) <= 5;
-      confirm.disabled = !ready || pending;
+      confirm.disabled = !ready;
       status.textContent = ready
         ? "Timbro centrato. Pronto per la consegna."
         : "Allinea i due cursori al centro: 50 / 50.";
@@ -217,13 +223,13 @@ export function renderActivity(
                 : step.blocked.includes(i)
                   ? "×"
                   : "";
-        b.disabled = pending || failed || !adjacent(pos, i);
+        b.disabled = failed || !adjacent(pos, i);
         b.setAttribute(
           "aria-label",
           `Casella ${i + 1}${i === pos ? ", segnalino" : i === step.goal ? ", uscita" : step.blocked.includes(i) ? ", ostacolo" : ""}`,
         );
       }
-      confirm.disabled = failed || pos !== step.goal || pending;
+      confirm.disabled = failed || pos !== step.goal;
       status.textContent = failed
         ? "Hai urtato un ostacolo. Ricomincia il percorso."
         : pos === step.goal
@@ -307,14 +313,13 @@ export function renderActivity(
       "button full",
     );
     const update = () => {
-      confirm.disabled =
-        !active || selected.size !== step.targets.length || pending;
+      confirm.disabled = !active || selected.size !== step.targets.length;
       root.dataset.state =
         exposure >= 5 || remaining === 0 ? "error" : "active";
       meter.value = exposure;
       status.textContent = `${selected.size} / ${step.targets.length} raccolti · ${Math.ceil(remaining)} s · esposizione ${exposure} / 5`;
       cells.forEach((b, i) => {
-        b.disabled = !active || pending || selected.has(i);
+        b.disabled = !active || selected.has(i);
         b.classList.toggle("collected", selected.has(i));
         b.setAttribute("aria-pressed", String(selected.has(i)));
       });
@@ -429,10 +434,24 @@ export function renderActivity(
     );
     confirm.hidden = true;
     root.append(status, toggle, confirm);
+    onVisibility = () => {
+      last = performance.now();
+      if (document.hidden && progress < 100) {
+        copying = false;
+        toggle.textContent = "Riprendi copia";
+        machine.classList.remove("copying");
+        status.textContent = `Copia ${Math.floor(progress)}% · al riparo. Riprendi quando sei pronto.`;
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     const tick = () => {
       const now = performance.now(),
         dt = Math.min(now - last, 300);
       last = now;
+      if (document.hidden) {
+        onVisibility();
+        return;
+      }
       phase = ((now - started) % 8000) / 1000;
       const danger = phase >= 6,
         warning = phase >= 4.5 && phase < 6;
@@ -455,18 +474,34 @@ export function renderActivity(
       status.textContent = `Copia ${Math.floor(progress)}% · puoi nasconderla senza perdere il lavoro`;
       if (progress >= 100) {
         copying = false;
+        const moveFocus = document.activeElement === toggle;
         toggle.hidden = true;
         confirm.hidden = false;
         status.textContent = "Fascicolo pronto. Ritira la copia.";
         clearInterval(timer);
-        sound("success");
+        if (moveFocus) confirm.focus();
       }
     };
     tick();
     timer = setInterval(tick, 100);
   }
-  return () => {
+  const cleanup = () => {
     disposed = true;
     if (timer) clearInterval(timer);
+    document.removeEventListener("visibilitychange", onVisibility);
   };
+  cleanup.isActive = () => !disposed;
+  let pendingFocus = null;
+  cleanup.setPending = (value) => {
+    if (value && root.contains(document.activeElement))
+      pendingFocus = document.activeElement;
+    pending = value;
+    root.disabled = value;
+    root.setAttribute("aria-busy", String(value));
+    if (!value && pendingFocus && document.activeElement === document.body) {
+      pendingFocus.focus({ preventScroll: true });
+      pendingFocus = null;
+    }
+  };
+  return cleanup;
 }

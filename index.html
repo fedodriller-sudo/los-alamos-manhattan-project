@@ -127,6 +127,7 @@
               ><button id="exit-button" class="text-button">Menu</button>
             </div>
           </div>
+          <div id="game-notice" class="game-notice"></div>
           <div
             id="map"
             class="campus"
@@ -346,7 +347,10 @@
       </div>
       <p id="event-kind" class="event-kind"></p>
       <h2 id="event-title"></h2>
-      <p id="event-intro" class="event-intro"></p>
+      <details id="event-context" class="event-context">
+        <summary id="event-context-label">Contesto della missione</summary>
+        <p id="event-intro" class="event-intro"></p>
+      </details>
       <div id="event-content"></div>
       <p id="event-feedback" class="feedback" role="status"></p>
       <div class="event-bottom">
