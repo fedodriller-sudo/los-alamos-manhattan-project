@@ -318,8 +318,13 @@
     };
   }
 
+  function pendingSpyTasks(loc) {
+    return (loc.spyTasks || []).filter((t) => !state.spyIntelDone.has(t.id));
+  }
+
   function spyHasWorkAt(loc) {
     if (state.role !== "spy") return false;
+    if (pendingSpyTasks(loc).length) return true;
     if (loc.intelSteal && !state.stolenAt.has(loc.id)) return true;
     if (loc.oppenheimerHub) {
       return SPY_INTEL_TASKS.some((t) => !state.spyIntelDone.has(t.id));
@@ -370,7 +375,7 @@
       if (banner) {
         banner.classList.remove("hidden");
         banner.textContent =
-          "Cinque dispatches ricevuti a Mosca: la rete sovietica ha abbastanza segreti sul Manhattan Project (vittoria spia, demo).";
+          "Tre dispatches a Mosca (Fuchs, Rosenberg, Seborer): vittoria della rete sovietica sul Manhattan Project.";
       }
     }
     persistGame();
@@ -707,7 +712,9 @@
       const pendingSpy = spyHasWorkAt(loc);
       const pending = isSpy ? pendingSpy : pendingStaff;
       const canSteal = isSpy && loc.intelSteal && !state.stolenAt.has(loc.id);
-      const isCrit = loc.oppenheimerHub || loc.tasks.some((t) => t.oppenheimer);
+      const isCrit =
+        loc.oppenheimerHub ||
+        loc.tasks.some((t) => t.oppenheimer || CRITICAL_TASK_IDS.includes(t.id));
 
       const zone = document.createElement("div");
       zone.className =
@@ -764,8 +771,22 @@
       const note = document.createElement("p");
       note.className = "spy-note";
       note.textContent =
-        "Copertura da scienziato: nella stanza ci sono molti documenti e oggetti — trova quello giusto per Mosca.";
+        "Copertura da scienziato: completa le missioni storiche per Mosca, poi usa «Dispatch a Mosca».";
       pick.appendChild(note);
+
+      const spyTasks = pendingSpyTasks(loc);
+      if (spyTasks.length) {
+        spyTasks.forEach((task) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "task-pick-btn mission-card spy-mission";
+          b.innerHTML = window.MP_MISSION_UI?.missionCardHtml?.(task, loc) || task.name;
+          b.addEventListener("click", () => startTask(task, loc, "spyHub"));
+          pick.appendChild(b);
+        });
+        modal.classList.remove("hidden");
+        return;
+      }
 
       if (!spyHasWorkAt(loc)) {
         const empty = document.createElement("p");
@@ -880,16 +901,27 @@
         `Pacchetti in tasca: ${state.intelStash.length}`;
       ul.appendChild(card);
 
-      LOCATIONS.filter((l) => l.intelSteal || l.oppenheimerHub).forEach((loc) => {
+      LOCATIONS.forEach((loc) => {
+        const tasks = loc.spyTasks || [];
+        if (!tasks.length) return;
+        const doneN = tasks.filter((t) => state.spyIntelDone.has(t.id)).length;
         const block = document.createElement("li");
         block.className = "objective-loc-block";
         const th = window.MP_MISSION_UI?.THEME_UI?.[loc.theme] || { icon: "🕵", label: "Intel" };
-        const done = loc.intelSteal && state.stolenAt.has(loc.id);
         block.innerHTML =
           `<div class="objective-loc-head" style="--loc-hue:280">` +
           `<span class="objective-loc-icon">${th.icon}</span>` +
           `<span class="objective-loc-meta"><span class="objective-loc-name">${loc.name}</span>` +
-          `<span class="objective-loc-count">${done ? "Copiato" : "Da infiltrare"}</span></span></div>`;
+          `<span class="objective-loc-count">${doneN}/${tasks.length} missioni</span></span></div>`;
+        const sub = document.createElement("ul");
+        sub.className = "objective-loc-tasks";
+        tasks.forEach((t) => {
+          const li = document.createElement("li");
+          li.className = state.spyIntelDone.has(t.id) ? "done" : "pending";
+          li.textContent = t.name.replace(/^★\s*/, "");
+          sub.appendChild(li);
+        });
+        block.appendChild(sub);
         ul.appendChild(block);
       });
 
@@ -967,7 +999,7 @@
         banner.classList.remove("hidden");
         banner.classList.add("partial");
         banner.textContent =
-          `${WIN_TASK_COUNT} obiettivi fatti, ma servono ancora le 3 missioni ★ alla Direzione Project Y.`;
+          `${WIN_TASK_COUNT} obiettivi fatti, ma servono ancora tutte le missioni ★ della campagna (Demon Core, glove box, Trinity, dogana).`;
       }
     }
   }

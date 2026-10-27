@@ -387,11 +387,346 @@
     wrap.append(hint, booth, status);
   }
 
+  /** Demon Core: mattoni (Daghlian) + cacciavite (Slotin) per misure */
+  function runDemonCoreStabilize(wrap, ctx, onComplete) {
+    const hint = document.createElement("p");
+    hint.className = "mg-hint";
+    hint.textContent =
+      ctx.hint ||
+      "Fase 1: aggiungi mattoni senza superare la criticità. Fase 2: tieni il cacciavite nella fascia verde e acquisisci 3 letture neutroni.";
+    const panel = document.createElement("div");
+    panel.className = "lg-demon-panel";
+    const critBar = document.createElement("div");
+    critBar.className = "lg-crit-bar";
+    critBar.innerHTML =
+      '<span>Criticità</span><div class="lg-crit-track"><div class="lg-crit-safe"></div><div class="lg-crit-fill"></div></div>';
+    const fill = critBar.querySelector(".lg-crit-fill");
+    const brickBtn = document.createElement("button");
+    brickBtn.type = "button";
+    brickBtn.className = "btn primary small";
+    brickBtn.textContent = "Aggiungi mattone (fase Daghlian)";
+    const screwRow = document.createElement("label");
+    screwRow.className = "lg-screw-row";
+    screwRow.innerHTML = 'Cacciavite (fase Slotin): <input type="range" min="0" max="100" value="50" class="lg-screw-slider" />';
+    const screw = screwRow.querySelector("input");
+    const sampleBtn = document.createElement("button");
+    sampleBtn.type = "button";
+    sampleBtn.className = "btn small";
+    sampleBtn.textContent = "Acquisisci misura (0/3)";
+    sampleBtn.disabled = true;
+    const status = document.createElement("p");
+    status.className = "mg-progress";
+    panel.append(critBar, brickBtn, screwRow, sampleBtn);
+    wrap.append(hint, panel, status);
+
+    let bricks = 0;
+    let phase = 1;
+    let samples = 0;
+    const targetBricks = 5;
+
+    function updateCrit() {
+      const c = phase === 1 ? bricks * 14 : 55 + Math.abs(Number(screw.value) - 50) * 1.4;
+      fill.style.width = `${Math.min(100, c)}%`;
+      fill.classList.toggle("lg-crit-danger", c > 78);
+      if (phase === 2) {
+        const ok = Number(screw.value) >= 44 && Number(screw.value) <= 56;
+        sampleBtn.disabled = !ok;
+      }
+    }
+
+    brickBtn.addEventListener("click", () => {
+      if (phase !== 1) return;
+      bricks += 1;
+      if (bricks > targetBricks) {
+        status.textContent = "Flash di neutroni — criticità superata. Riprova.";
+        bricks = 0;
+      } else if (bricks === targetBricks) {
+        status.textContent = "Geometria al limite: passa al cacciavite (Slotin).";
+        phase = 2;
+        brickBtn.disabled = true;
+        screw.disabled = false;
+      } else {
+        status.textContent = `Mattoni: ${bricks}/${targetBricks}`;
+      }
+      updateCrit();
+    });
+    screw.disabled = true;
+    screw.addEventListener("input", updateCrit);
+    sampleBtn.addEventListener("click", () => {
+      if (phase !== 2) return;
+      samples += 1;
+      sampleBtn.textContent = `Acquisisci misura (${samples}/3)`;
+      status.textContent = `Lettura ${samples} registrata.`;
+      if (samples >= 3) {
+        status.textContent = "Tre misure stabili — Demon Core sotto controllo.";
+        setTimeout(onComplete, 500);
+      }
+    });
+    updateCrit();
+  }
+
+  /** Sabbia verde post-Trinity */
+  function runTrinitySand(wrap, ctx, onComplete) {
+    const hint = document.createElement("p");
+    hint.className = "mg-hint";
+    hint.textContent =
+      ctx.hint || "Trascina la pala sulla sabbia verde radioattiva e riempi il sacco plombato.";
+    const floor = document.createElement("div");
+    floor.className = "lg-trinity-floor";
+    const sack = document.createElement("div");
+    sack.className = "lg-trinity-sack";
+    sack.textContent = "Sacco 0%";
+    const shovel = document.createElement("div");
+    shovel.className = "lg-trinity-shovel";
+    shovel.textContent = "🪣";
+    const status = document.createElement("p");
+    status.className = "mg-progress";
+    let cleaned = 0;
+    const total = 12;
+    for (let i = 0; i < total; i++) {
+      const t = document.createElement("div");
+      t.className = "lg-tile-radio";
+      floor.appendChild(t);
+    }
+    floor.appendChild(shovel);
+    wrap.append(hint, floor, sack, status);
+
+    function tryClean(ev) {
+      const tiles = floor.querySelectorAll(".lg-tile-radio");
+      tiles.forEach((t) => {
+        if (!t.classList.contains("lg-tile-dirty")) return;
+        const r = t.getBoundingClientRect();
+        if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
+          t.classList.remove("lg-tile-dirty");
+          cleaned += 1;
+          const pct = Math.round((cleaned / total) * 100);
+          sack.textContent = `Sacco ${pct}%`;
+          status.textContent = `Sabbia verde raccolta: ${cleaned}/${total}`;
+          if (cleaned >= total) setTimeout(onComplete, 450);
+        }
+      });
+    }
+    floor.querySelectorAll(".lg-tile-radio").forEach((t) => t.classList.add("lg-tile-dirty"));
+    dragPiece(shovel, (_el, ev) => {
+      shovel.style.position = "relative";
+      shovel.style.left = "";
+      shovel.style.top = "";
+      tryClean(ev);
+    });
+    floor.addEventListener("mousemove", (e) => {
+      if (shovel.style.position === "fixed") tryClean(e);
+    });
+  }
+
+  /** Dogana: regola booleana AND sui flag visitatore */
+  function runGateBoolean(wrap, ctx, onComplete) {
+    const hint = document.createElement("p");
+    hint.className = "mg-hint";
+    hint.textContent =
+      ctx.hint ||
+      "Regola: ENTRA solo se badge valido ∧ Q-clearance ∧ visita autorizzata ∧ NON in lista nera. Altrimenti DENY.";
+    const rule = document.createElement("p");
+    rule.className = "lg-bool-rule";
+    rule.textContent = "badge ∧ Q ∧ visita ∧ ¬lista_nera";
+    const lane = document.createElement("div");
+    lane.className = "lg-bool-lane";
+    const status = document.createElement("p");
+    status.className = "mg-progress";
+    wrap.append(hint, rule, lane, status);
+
+    const visitors = [
+      { name: "H. Bethe", badge: true, q: true, visit: true, black: false },
+      { name: "Courier M-12", badge: true, q: false, visit: true, black: false },
+      { name: "T. Visitor", badge: true, q: true, visit: false, black: false },
+      { name: "R. Feynman", badge: true, q: true, visit: true, black: false },
+      { name: "Unknown", badge: false, q: true, visit: true, black: false },
+      { name: "I. Spy cover", badge: true, q: true, visit: true, black: true },
+      { name: "L. Slotin", badge: true, q: true, visit: true, black: false },
+      { name: "Bad badge", badge: false, q: false, visit: false, black: true },
+    ];
+    const shuffled = shuffle(visitors, hash(ctx.taskId || "gate"));
+    let idx = 0;
+    let correct = 0;
+
+    function allowed(v) {
+      return v.badge && v.q && v.visit && !v.black;
+    }
+
+    function showVisitor() {
+      lane.innerHTML = "";
+      if (idx >= shuffled.length) {
+        if (correct >= 7) {
+          status.textContent = "Turno guardia completato — accessi sicuri.";
+          setTimeout(onComplete, 500);
+        } else {
+          status.textContent = "Troppi errori — briefing sicurezza.";
+          idx = 0;
+          correct = 0;
+          showVisitor();
+        }
+        return;
+      }
+      const v = shuffled[idx];
+      const card = document.createElement("div");
+      card.className = "lg-bool-card";
+      card.innerHTML =
+        `<strong>${v.name}</strong>` +
+        `<ul class="lg-bool-flags">` +
+        `<li>badge: ${v.badge ? "✓" : "✗"}</li>` +
+        `<li>Q: ${v.q ? "✓" : "✗"}</li>` +
+        `<li>visita: ${v.visit ? "✓" : "✗"}</li>` +
+        `<li>lista nera: ${v.black ? "SÌ" : "no"}</li></ul>`;
+      const pass = document.createElement("button");
+      pass.type = "button";
+      pass.className = "btn primary small";
+      pass.textContent = "PASS";
+      const deny = document.createElement("button");
+      deny.type = "button";
+      deny.className = "btn small";
+      deny.textContent = "DENY";
+      const row = document.createElement("div");
+      row.className = "lg-bool-actions";
+      row.append(pass, deny);
+      lane.append(card, row);
+
+      function decide(letIn) {
+        const ok = letIn === allowed(v);
+        if (ok) correct += 1;
+        else status.textContent = `Errore su ${v.name}: ${allowed(v) ? "avrebbe dovuto entrare" : "avrebbe dovuto essere fermato"}.`;
+        idx += 1;
+        if (ok) status.textContent = `Corretto (${correct}/${idx}).`;
+        showVisitor();
+      }
+      pass.addEventListener("click", () => decide(true));
+      deny.addEventListener("click", () => decide(false));
+    }
+    showVisitor();
+  }
+
+  function runSpyPhotostat(wrap, ctx, onComplete) {
+    const hint = document.createElement("p");
+    hint.className = "mg-hint";
+    hint.textContent = "Klaus Fuchs: copia i documenti Fat Man mentre la guardia non passa.";
+    const bar = document.createElement("div");
+    bar.className = "lg-spy-progress";
+    bar.innerHTML = '<div class="lg-spy-progress-fill"></div>';
+    const fill = bar.querySelector(".lg-spy-progress-fill");
+    const hide = document.createElement("button");
+    hide.type = "button";
+    hide.className = "btn small";
+    hide.textContent = "Copia (tieni premuto)";
+    const patrol = document.createElement("p");
+    patrol.className = "lg-spy-patrol";
+    patrol.textContent = "Corridoio libero";
+    const status = document.createElement("p");
+    status.className = "mg-progress";
+    wrap.append(hint, bar, hide, patrol, status);
+    let prog = 0;
+    let patrolNear = false;
+    let timer;
+    const patrolTimer = setInterval(() => {
+      patrolNear = Math.random() < 0.35;
+      patrol.textContent = patrolNear ? "⚠ Guardia in arrivo — smetti di copiare!" : "Corridoio libero";
+      patrol.classList.toggle("lg-spy-patrol-warn", patrolNear);
+    }, 1800);
+    const tick = () => {
+      if (!patrolNear) prog += 4;
+      else prog = Math.max(0, prog - 8);
+      fill.style.width = `${Math.min(100, prog)}%`;
+      if (prog >= 100) {
+        clearInterval(timer);
+        clearInterval(patrolTimer);
+        status.textContent = "Schema implosione Fat Man fotocopiato.";
+        setTimeout(onComplete, 450);
+      }
+    };
+    hide.addEventListener("mousedown", () => {
+      timer = setInterval(tick, 120);
+    });
+    hide.addEventListener("mouseup", () => clearInterval(timer));
+    hide.addEventListener("mouseleave", () => clearInterval(timer));
+  }
+
+  function runSpyForgery(wrap, ctx, onComplete) {
+    const hint = document.createElement("p");
+    hint.className = "mg-hint";
+    hint.textContent = 'Scrivi esattamente "Julius Rosenberg", allinea il timbro Q e consegna.';
+    const nameIn = document.createElement("input");
+    nameIn.type = "text";
+    nameIn.className = "lg-spy-name-input";
+    nameIn.placeholder = "Destinatario";
+    const stamp = document.createElement("input");
+    stamp.type = "range";
+    stamp.min = "0";
+    stamp.max = "100";
+    stamp.value = "30";
+    stamp.className = "lg-spy-stamp";
+    const deliver = document.createElement("button");
+    deliver.type = "button";
+    deliver.className = "btn primary small";
+    deliver.textContent = "Consegna al contatto";
+    const status = document.createElement("p");
+    status.className = "mg-progress";
+    wrap.append(hint, nameIn, stamp, deliver, status);
+    deliver.addEventListener("click", () => {
+      const nameOk = nameIn.value.trim() === "Julius Rosenberg";
+      const stampOk = Number(stamp.value) >= 42 && Number(stamp.value) <= 58;
+      if (nameOk && stampOk) {
+        status.textContent = "Documento consegnato alla rete Rosenberg.";
+        setTimeout(onComplete, 450);
+      } else if (!nameOk) {
+        status.textContent = 'Nome errato: deve essere esattamente "Julius Rosenberg".';
+      } else {
+        status.textContent = "Timbro Q fuori allineamento — regola lo slider.";
+      }
+    });
+  }
+
+  function runSpyDetonation(wrap, ctx, onComplete) {
+    const hint = document.createElement("p");
+    hint.className = "mg-hint";
+    hint.textContent = "Oscar Seborer: collega i bridge nell’ordine 2 → 5 → 8, poi conferma l’innesco.";
+    const panel = document.createElement("div");
+    panel.className = "lg-deton-panel";
+    const order = [2, 5, 8];
+    let step = 0;
+    const status = document.createElement("p");
+    status.className = "mg-progress";
+    for (let n = 1; n <= 9; n++) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "mg-patch-jack";
+      b.textContent = String(n);
+      b.addEventListener("click", () => {
+        if (n === order[step]) {
+          b.classList.add("lit");
+          step += 1;
+          if (step >= order.length) {
+            status.textContent = "Rete detonatori copiata — timing implosione registrato.";
+            setTimeout(onComplete, 450);
+          }
+        } else {
+          status.textContent = "Sequenza innesco errata.";
+          step = 0;
+          panel.querySelectorAll(".lit").forEach((el) => el.classList.remove("lit"));
+        }
+      });
+      panel.appendChild(b);
+    }
+    wrap.append(hint, panel, status);
+  }
+
   window.MP_LOC_GAMES = {
     runPuShuttle,
     runFlameCut,
     runTruckLoad,
     runFloorClean,
     runGateIdentify,
+    runDemonCoreStabilize,
+    runTrinitySand,
+    runGateBoolean,
+    runSpyPhotostat,
+    runSpyForgery,
+    runSpyDetonation,
   };
 })();

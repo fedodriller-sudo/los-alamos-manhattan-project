@@ -7,19 +7,24 @@ const ROLES = {
     label: "Personale del Progetto",
     team: "crew",
     blurb:
-      "Sei parte del Manhattan Project a Los Alamos: completa gli obiettivi sulla mappa prima che scada il tempo.",
+      "Campagna storica: Demon Core e glove box (plutonio), sabbia verde a Trinity, dogana all’ingresso — 4 missioni ★.",
   },
   spy: {
     id: "spy",
     label: "Spia sovietica",
     team: "soviet",
     blurb:
-      "Infiltrato come scienziato: in ogni stanza cerca il documento giusto (macchinetta o mobili da spostare), poi invia tutto a Mosca con «Dispatch».",
+      "Fuchs (Fat Man), Rosenberg (documento falso), Seborer (innesco): 3 missioni poi «Dispatch a Mosca» (×3).",
   },
 };
 
-/** Task obbligatori per la vittoria crew */
-const CRITICAL_TASK_IDS = ["opp-brief", "opp-groves", "opp-trinity"];
+/** Task obbligatori per la vittoria crew (campagna missioni storiche) */
+const CRITICAL_TASK_IDS = [
+  "demon-core-stabilize",
+  "pu-glovebox-shuttle",
+  "trinity-sand-cleanup",
+  "gate-boolean-check",
+];
 
 const MEETING_QUOTES = [
   "«Dobbiamo far funzionare questo laboratorio come una sola macchina.» — Oppenheimer, 1943",
@@ -39,18 +44,20 @@ const LOCATIONS = [
     x: 52,
     y: 58,
     tasks: [
-      { id: "d-glove", name: "Purificare plutonio in glove box (senza polvere leggera)", type: "sequence", steps: 1 },
-      { id: "d-filter", name: "Controllare lavaggio d’aria del padiglione plutonio", type: "wires", steps: 3 },
-      { id: "d-sample", name: "Lavorare il metallo Pu per il nocciolo (pit)", type: "slider", steps: 1 },
-      { id: "d-decon", name: "Decontaminare il banco glove box dopo il campione", type: "wires", steps: 3 },
-      { id: "d-scale", name: "Pesare micro-campione Pu sulla bilancia analitica", type: "slider", steps: 1 },
       {
-        id: "d-pu-balance",
-        name: "Bilanciare carica Pu sul pit con dosimetro (fascia mR/h sicura)",
+        id: "demon-core-stabilize",
+        name: "★ Demon Core: i due incidenti — stabilizza con il cacciavite e acquisisci le misure",
         type: "sequence",
         steps: 1,
+        oppenheimer: true,
       },
-      { id: "d-lead", name: "Posizionare mattoni di piombo extra attorno al pit", type: "sequence", steps: 3 },
+      {
+        id: "pu-glovebox-shuttle",
+        name: "★ Trasferire plutonio nel glove box (camera lavoro → confezione pit)",
+        type: "sequence",
+        steps: 1,
+        oppenheimer: true,
+      },
     ],
     intelSteal: "Appunti metallurgia plutonio e procedure purificazione Pu",
   },
@@ -60,6 +67,15 @@ const LOCATIONS = [
     theme: "technical",
     x: 62,
     y: 52,
+    spyTasks: [
+      {
+        id: "spy-seborer-detonation",
+        name: "★ Oscar Seborer: copiare schemi di innesco e detonazione nucleare",
+        type: "sequence",
+        steps: 1,
+        theme: "espionage",
+      },
+    ],
     tasks: [
       { id: "t-log", name: "Archiviare dati del primo grande esperimento del lab", type: "sequence", steps: 4 },
       { id: "t-cal", name: "Sincronizzare orologi degli strumenti del settore T", type: "wires", steps: 4 },
@@ -96,6 +112,15 @@ const LOCATIONS = [
       { id: "gm-log", name: "Registrare seriali lenti prova Fat Man", type: "sequence", steps: 3 },
     ],
     intelSteal: "Disegni giunzione lenti HE e prove Fat Man",
+    spyTasks: [
+      {
+        id: "spy-fuchs-fatman",
+        name: "★ Klaus Fuchs: rubare i documenti su Fat Man (implosione)",
+        type: "sequence",
+        steps: 1,
+        theme: "espionage",
+      },
+    ],
   },
   {
     id: "sigma",
@@ -229,6 +254,15 @@ const LOCATIONS = [
     theme: "machineShop",
     x: 52,
     y: 50,
+    spyTasks: [
+      {
+        id: "spy-rosenberg-forged",
+        name: "★ Documento finto per Julius Rosenberg (firma il nome e consegna)",
+        type: "sequence",
+        steps: 1,
+        theme: "espionage",
+      },
+    ],
     tasks: [
       { id: "v-lathe", name: "Tornire componente in uranio / acciaio per il gadget", type: "slider", steps: 1 },
       { id: "v-tools", name: "Restituire fresa al banco dopo lavorazione HE", type: "sequence", steps: 4 },
@@ -376,6 +410,23 @@ const LOCATIONS = [
     intelSteal: "Orari convogli verso S-Site e V-Site",
   },
   {
+    id: "trinity-ground",
+    name: "Trinity · cratere (recupero)",
+    theme: "motorPool",
+    x: 32,
+    y: 72,
+    tasks: [
+      {
+        id: "trinity-sand-cleanup",
+        name: "★ Dopo Trinity: raccogliere la sabbia radioattiva (verde) nel deserto",
+        type: "sequence",
+        steps: 1,
+        oppenheimer: true,
+      },
+    ],
+    intelSteal: "",
+  },
+  {
     id: "post-office",
     name: "Ufficio postale (censura)",
     theme: "postOffice",
@@ -413,9 +464,13 @@ const LOCATIONS = [
     x: 64,
     y: 46,
     tasks: [
-      { id: "p-badge", name: "Controllare badge doppio: Post + Tech Area", type: "sequence", steps: 4 },
-      { id: "p-visitor", name: "Registrare visitatore con scorta Groves", type: "wires", steps: 3 },
-      { id: "p-revoke", name: "Revocare badge scaduto di un tecnico", type: "sequence", steps: 3 },
+      {
+        id: "gate-boolean-check",
+        name: "★ Sorveglianza ingresso Tech Area: dogana booleana (PASS / DENY)",
+        type: "sequence",
+        steps: 1,
+        oppenheimer: true,
+      },
     ],
     intelSteal: "Registro badge e clearance Q",
   },
@@ -471,19 +526,39 @@ function allTasks() {
   return out;
 }
 
-const WIN_TASK_COUNT = 12;
+const WIN_TASK_COUNT = 4;
 
 function criticalTasksComplete(completedSet) {
   return CRITICAL_TASK_IDS.every((id) => completedSet.has(id));
 }
 
 /** Missioni extra alla Direzione Project Y (documenti di massima classifica) */
+/** Missioni spia dedicate (Gamma / Officina V / Main Technical) — vedi anche `spyTasks` sui luoghi */
 const SPY_INTEL_TASKS = [
-  { id: "spy-copy", name: "Copiare schema lenti implosione (Fat Man)", type: "wires", steps: 3, theme: "espionage" },
-  { id: "spy-micro", name: "Estrarre microfilm dalla posta censurata (PO Box 1663)", type: "sequence", steps: 3, theme: "espionage" },
+  {
+    id: "spy-fuchs-fatman",
+    name: "Klaus Fuchs — documenti Fat Man (implosione)",
+    type: "sequence",
+    steps: 1,
+    theme: "espionage",
+  },
+  {
+    id: "spy-rosenberg-forged",
+    name: "Julius Rosenberg — documento falsificato e consegna",
+    type: "sequence",
+    steps: 1,
+    theme: "espionage",
+  },
+  {
+    id: "spy-seborer-detonation",
+    name: "Oscar Seborer — innesco e sistema di detonazione",
+    type: "sequence",
+    steps: 1,
+    theme: "espionage",
+  },
 ];
 
-const SPY_DISPATCH_WIN = 5;
+const SPY_DISPATCH_WIN = 3;
 
 const LOCATION_DESCS = {
   "building-d":
@@ -516,6 +591,8 @@ const LOCATION_DESCS = {
   dispensary:
     "Ambulatorio e laboratorio medico: controlli su chi lavora con chimici ed esplosivi.",
   "motor-pool": "Parco veicoli: trasporti verso S-Site, V-Site e strade del mesa.",
+  "trinity-ground":
+    "Zona del test Trinity (1945): recupero detriti e sabbia contaminata nel deserto di Jornada del Muerto.",
   "post-office":
     "Ufficio postale con censura: tutta la corrispondenza passa da qui (spesso indirizzata a PO Box 1663, Santa Fe).",
   commissary: "Mensa e negozio alimentari per famiglie e personale del «Hill».",

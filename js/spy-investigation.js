@@ -167,8 +167,9 @@
 
   function hubExtraDocs() {
     return [
-      { id: "spy-copy", title: "Schema lenti implosione (Fat Man)", correct: true, hubTask: "spy-copy" },
-      { id: "spy-micro", title: "Microfilm posta PO Box 1663", correct: true, hubTask: "spy-micro" },
+      { id: "spy-fuchs-fatman", title: "Documenti Fat Man (Klaus Fuchs)", correct: true, hubTask: "spy-fuchs-fatman" },
+      { id: "spy-rosenberg-forged", title: "Documento per Julius Rosenberg", correct: true, hubTask: "spy-rosenberg-forged" },
+      { id: "spy-seborer-detonation", title: "Innesco nucleare (Oscar Seborer)", correct: true, hubTask: "spy-seborer-detonation" },
       { id: "decoy-h1", title: "Menu Commissary", correct: false },
       { id: "decoy-h2", title: "Orari Motor pool", correct: false },
     ];

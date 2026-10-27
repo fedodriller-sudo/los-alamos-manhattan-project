@@ -1,4 +1,4 @@
-const CACHE_NAME = "los-alamos-v1";
+const CACHE_NAME = "los-alamos-v2-missioni-storiche";
 
 const ASSETS = [
   "./",

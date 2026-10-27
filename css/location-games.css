@@ -353,3 +353,139 @@
   color: var(--accent);
   border-color: var(--accent);
 }
+
+.lg-demon-panel {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+  border: 1px solid #4a6080;
+}
+
+.lg-crit-track {
+  position: relative;
+  height: 12px;
+  background: #1a2430;
+  border-radius: 6px;
+  margin: 0.5rem 0 1rem;
+  overflow: hidden;
+}
+
+.lg-crit-safe {
+  position: absolute;
+  left: 35%;
+  width: 25%;
+  height: 100%;
+  background: rgba(61, 214, 140, 0.25);
+}
+
+.lg-crit-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #3d8b40, #e8c040, #c04040);
+  transition: width 0.15s;
+}
+
+.lg-crit-fill.lg-crit-danger {
+  background: #c04040;
+}
+
+.lg-screw-row {
+  display: block;
+  margin: 0.75rem 0;
+  font-size: 0.85rem;
+}
+
+.lg-trinity-floor {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0.75rem;
+  background: #2a2418;
+  border-radius: 10px;
+  min-height: 120px;
+  position: relative;
+}
+
+.lg-tile-radio.lg-tile-dirty {
+  background: radial-gradient(circle at 40% 40%, #6fdc6f, #2a5c2e 70%);
+  box-shadow: 0 0 12px rgba(111, 220, 111, 0.55);
+  border-radius: 6px;
+  min-height: 36px;
+}
+
+.lg-trinity-shovel {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  cursor: grab;
+  font-size: 1.4rem;
+}
+
+.lg-trinity-sack {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.lg-bool-rule {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin: 0.25rem 0 0.75rem;
+}
+
+.lg-bool-card {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid #4a6080;
+}
+
+.lg-bool-flags {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.82rem;
+}
+
+.lg-bool-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.lg-spy-progress {
+  height: 10px;
+  background: #1a2430;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.lg-spy-progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #6a4a9a, #c060a0);
+  transition: width 0.1s;
+}
+
+.lg-spy-patrol-warn {
+  color: #e8a040;
+  font-weight: 600;
+}
+
+.lg-spy-name-input {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #4a6080;
+  background: #0e141c;
+  color: inherit;
+}
+
+.lg-deton-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+}
