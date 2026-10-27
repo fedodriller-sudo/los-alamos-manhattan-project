@@ -957,18 +957,35 @@ function renderLobby() {
     b.disabled = room.started;
     b.setAttribute("aria-pressed", String(b.dataset.team === ownTeam()));
   }
-  $("start-button").disabled = !host || room.players.length < 2 || !both;
+  const missing = ["personnel", "spies"].find(
+    (team) => !room.players.some((player) => player.team === team),
+  );
+  const needsInvite = host && !room.started && !both;
+  $("copy-invite").className = needsInvite ? "button gold full" : "button full";
+  $("copy-invite").textContent = needsInvite
+    ? `Copia link: invita ${missing === "spies" ? "le Spie" : "il Personale"}`
+    : "Copia link stanza";
+  $("copy-signal").className = "button full";
+  $("signal-panel").dataset.priority = needsInvite ? "invite" : "secondary";
+  $("signal-heading").textContent = needsInvite
+    ? `Invita ${missing === "spies" ? "le Spie" : "il Personale"}.`
+    : "Invita i tuoi amici.";
+  $("start-button").hidden = !host && !room.started;
+  $("start-button").disabled =
+    !room.started && (!host || room.players.length < 2 || !both);
+  $("start-button").className =
+    both || room.started ? "button gold full" : "button full";
   $("start-button").textContent = room.started
     ? "Rientra nel turno"
-    : host
-      ? "Avvia il turno"
-      : "In attesa dell’host";
-  $("host-help").textContent =
-    room.players.length < 2 || !both
-      ? "Serve almeno una persona per squadra. Scegliete Personale e Spie."
+    : "Avvia il turno";
+  const help = room.started
+    ? "La gara è in corso. Rientra quando sei pronto."
+    : !both
+      ? `Manca un giocatore ${missing === "spies" ? "nelle Spie" : "nel Personale"}. ${host ? "Condividi il link o il QR con un amico." : "Puoi scegliere questa squadra qui sopra."}`
       : host
-        ? "La squadra è pronta. Puoi avviare."
+        ? "Entrambe le squadre sono pronte. Puoi avviare."
         : "L’host avvierà il turno per tutti.";
+  if ($("host-help").textContent !== help) $("host-help").textContent = help;
   $("player-name").disabled = true;
   renderSignaling();
 }
@@ -1320,7 +1337,8 @@ for (let i = 0; i < 3; i++) {
   const npc = document.createElement("div");
   npc.className = "campus-colleague colleague-" + i;
   const img = document.createElement("img");
-  img.src = i % 2 ? "./img/researcher-chibi.webp" : "./img/scientist-chibi.webp";
+  img.src =
+    i % 2 ? "./img/researcher-chibi.webp" : "./img/scientist-chibi.webp";
   img.alt = "";
   npc.append(img);
   scenery.append(npc);

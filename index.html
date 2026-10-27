@@ -222,10 +222,7 @@
       <div id="lobby-waiting" hidden>
         <p class="eyebrow">SCEGLI LA TUA SQUADRA</p>
         <div class="code-line">
-          <strong id="code-display" aria-label="Giocatori collegati"></strong
-          ><button id="copy-invite" class="button small">
-            Copia link stanza
-          </button>
+          <strong id="code-display" aria-label="Giocatori collegati"></strong>
         </div>
         <div
           id="team-picker"
@@ -250,11 +247,12 @@
             ><span>3 missioni · documenti e copertura</span>
           </button>
         </div>
+        <p id="host-help" class="subtle" role="status"></p>
+        <button id="copy-invite" class="button full">Copia link stanza</button>
         <ul id="roster" class="roster"></ul>
         <button id="start-button" class="button gold full">
           Avvia il turno
         </button>
-        <p id="host-help" class="subtle"></p>
       </div>
       <button id="cancel-join" class="text-button" hidden>
         Annulla collegamento
@@ -282,7 +280,7 @@
             </p>
             <label for="signal-output">Link della stanza</label>
             <input id="signal-output" readonly aria-label="Link della stanza" />
-            <button id="copy-signal" class="button gold full">
+            <button id="copy-signal" class="button full">
               Copia link stanza
             </button>
           </div>

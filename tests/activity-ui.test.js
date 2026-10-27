@@ -11,6 +11,13 @@ class Node {
     this.classList = { toggle() {}, remove() {} };
     this.value = "";
   }
+  set textContent(value) {
+    (this.writes ||= []).push({ value, at: performance.now() });
+    this._text = value;
+  }
+  get textContent() {
+    return this._text || "";
+  }
   set hidden(value) {
     this._hidden = value;
     if (value && globalThis.document?.activeElement === this)
@@ -197,4 +204,93 @@ test("collection expired before first deposit cannot submit completed selection"
   confirm.onclick();
   assert.equal(confirm.disabled, true);
   assert.equal(f.submitted.length, 0);
+});
+
+test("idle live regions write only changed patrol warnings", (t) => {
+  const f = fixture(t, { activity: "copy" });
+  const patrol = f.find((n) => n.className === "patrol-status"),
+    status = f.find((n) => n.className === "activity-status");
+  patrol.writes = [];
+  status.writes = [];
+  for (let time = 100; time <= 8000; time += 100) f.tick(time);
+  assert.equal(patrol.writes.length, 3);
+  assert.deepEqual(
+    patrol.writes.map((w) => w.at),
+    [4500, 6000, 8000],
+  );
+  assert.equal(status.writes.length, 0);
+  f.clean();
+  f.tick(9000);
+  assert.equal(patrol.writes.length, 3);
+});
+test("idle calibration does not repeat its live instruction", (t) => {
+  const f = fixture(t, { activity: "calibrate", target: 50 }),
+    status = f.find((n) => n.className === "activity-status");
+  status.writes = [];
+  for (let time = 100; time <= 1000; time += 100) f.tick(time);
+  assert.equal(status.writes.length, 0);
+});
+test("copy percentage is limited to once per second while pause and resume are immediate", (t) => {
+  const f = fixture(t, { activity: "copy" }),
+    status = f.find((n) => n.className === "activity-status");
+  const toggle = f.find((n) => n.textContent === "Avvia copia"),
+    bar = f.find((n) => n.tagName === "progress");
+  toggle.onclick();
+  status.writes = [];
+  for (let time = 100; time <= 4400; time += 100) f.tick(time);
+  assert.equal(status.writes.length, 4);
+  assert.ok(
+    status.writes.every((w, i, a) => i === 0 || w.at - a[i - 1].at >= 1000),
+  );
+  assert.ok(bar.value > 48); // Visual progress still runs at100ms.
+  toggle.onclick();
+  assert.match(status.textContent, /al riparo/i);
+  assert.equal(status.writes.at(-1).at, 4400);
+  f.tick(4500);
+  toggle.onclick();
+  assert.match(status.textContent, /in corso/i);
+  assert.equal(status.writes.at(-1).at, 4500);
+  f.tick(6000);
+  assert.match(status.textContent, /interrotta/i);
+  assert.equal(status.writes.at(-1).at, 6000);
+});
+test("collection deduplicates timer text but announces pickup and expiry immediately", (t) => {
+  const f = fixture(t, collectionStep),
+    status = f.find((n) => n.className === "activity-status");
+  f.find((n) => n.textContent === "Avvia raccolta").onclick();
+  status.writes = [];
+  for (let time = 200; time <= 1000; time += 200) f.tick(time);
+  assert.equal(status.writes.length, 1);
+  f.find((n) => n.attrs["aria-label"] === "Contrassegno 2").onclick();
+  assert.match(status.textContent, /1 \/ 6 raccolti/);
+  assert.equal(status.writes.at(-1).at, 1000);
+  f.tick(20000);
+  assert.match(status.textContent, /Tempo scaduto/);
+});
+test("route distinguishes free adjacent moves and preserves distant goal/obstacle rules", (t) => {
+  const f = fixture(t, {
+      activity: "route",
+      size: 4,
+      start: 0,
+      goal: 15,
+      blocked: [1],
+    }),
+    cell = (i) =>
+      f.find(
+        (n) => n.attrs["aria-label"]?.split(",")[0] === `Casella ${i + 1}`,
+      );
+  assert.equal(cell(15).textContent, "OUT");
+  assert.equal(cell(15).disabled, true);
+  assert.match(cell(4).className, /available/);
+  assert.equal(cell(4).textContent, "↓");
+  assert.match(cell(4).attrs["aria-label"], /mossa disponibile/);
+  assert.equal(cell(1).textContent, "×");
+  assert.doesNotMatch(cell(1).className, /available/);
+  assert.equal(cell(1).disabled, false); // Collision remains a playable error.
+  cell(4).onclick();
+  assert.equal(cell(0).textContent, "IN");
+  assert.match(cell(5).className, /available/);
+  for (const i of [5, 9, 10, 11, 15]) cell(i).onclick();
+  assert.equal(cell(15).textContent, "OUT");
+  assert.match(cell(15).attrs["aria-label"], /segnalino, uscita/);
 });

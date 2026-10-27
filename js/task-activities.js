@@ -1,3 +1,6 @@
+const setText = (element, text) => {
+  if (element.textContent !== text) element.textContent = text;
+};
 const node = (tag, cls, text) => {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -108,11 +111,14 @@ export function renderActivity(
         : failed
           ? "Riprova la misura"
           : "Avvia misura";
-      status.textContent = holding
-        ? "Mantieni la fascia per 3 secondi. Correggi il cursore se serve."
-        : failed
-          ? "Misura interrotta: il segnale è uscito dalla fascia. Regola e riprova."
-          : "Porta il segnale nella fascia, poi avvia la misura.";
+      setText(
+        status,
+        holding
+          ? "Mantieni la fascia per 3 secondi. Correggi il cursore se serve."
+          : failed
+            ? "Misura interrotta: il segnale è uscito dalla fascia. Regola e riprova."
+            : "Porta il segnale nella fascia, poi avvia la misura.",
+      );
     };
     control.input.oninput = () => update();
     root.append(meter, status, confirm);
@@ -149,9 +155,12 @@ export function renderActivity(
         Math.abs(Number(x.input.value) - 50) <= 5 &&
         Math.abs(Number(y.input.value) - 50) <= 5;
       confirm.disabled = !ready;
-      status.textContent = ready
-        ? "Timbro centrato. Pronto per la consegna."
-        : "Allinea i due cursori al centro: 50 / 50.";
+      setText(
+        status,
+        ready
+          ? "Timbro centrato. Pronto per la consegna."
+          : "Allinea i due cursori al centro: 50 / 50.",
+      );
     };
     x.input.oninput = update;
     y.input.oninput = update;
@@ -193,7 +202,7 @@ export function renderActivity(
       node(
         "p",
         "activity-instruction",
-        "Tocca una casella libera accanto al segnalino. IN → OUT.",
+        "Segui le frecce nelle caselle libere accanto al segnalino. Raggiungi OUT.",
       ),
       grid,
     );
@@ -207,34 +216,48 @@ export function renderActivity(
       root.dataset.state = failed ? "error" : "active";
       const pos = path.at(-1);
       for (const [i, b] of cells.entries()) {
+        const available =
+          !failed && adjacent(pos, i) && !step.blocked.includes(i);
         b.className =
           "route-cell" +
           (step.blocked.includes(i) ? " blocked" : "") +
           (i === pos ? " current" : "") +
           (i === step.goal ? " goal" : "") +
-          (path.includes(i) ? " visited" : "");
+          (path.includes(i) ? " visited" : "") +
+          (available ? " available" : "");
         b.textContent =
-          i === pos
-            ? "●"
-            : i === step.goal
-              ? "OUT"
+          i === step.goal
+            ? "OUT"
+            : i === pos
+              ? "●"
               : i === step.start
                 ? "IN"
                 : step.blocked.includes(i)
                   ? "×"
-                  : "";
+                  : available
+                    ? i === pos + step.size
+                      ? "↓"
+                      : i === pos - step.size
+                        ? "↑"
+                        : i > pos
+                          ? "→"
+                          : "←"
+                    : "";
         b.disabled = failed || !adjacent(pos, i);
         b.setAttribute(
           "aria-label",
-          `Casella ${i + 1}${i === pos ? ", segnalino" : i === step.goal ? ", uscita" : step.blocked.includes(i) ? ", ostacolo" : ""}`,
+          `Casella ${i + 1}${i === pos ? ", segnalino" : ""}${i === step.goal ? ", uscita" : ""}${step.blocked.includes(i) ? ", ostacolo" : ""}${available ? ", mossa disponibile" : ""}`,
         );
       }
       confirm.disabled = failed || pos !== step.goal;
-      status.textContent = failed
-        ? "Hai urtato un ostacolo. Ricomincia il percorso."
-        : pos === step.goal
-          ? "Percorso completato. Conferma la consegna."
-          : `Passi: ${path.length - 1} · raggiungi OUT.`;
+      setText(
+        status,
+        failed
+          ? "Hai urtato un ostacolo. Ricomincia il percorso."
+          : pos === step.goal
+            ? "Percorso completato. Conferma la consegna."
+            : `Passi: ${path.length - 1} · raggiungi OUT.`,
+      );
     };
     for (let i = 0; i < step.size ** 2; i++) {
       const b = button(
@@ -326,7 +349,14 @@ export function renderActivity(
       root.dataset.state =
         exposure >= 5 || remaining === 0 ? "error" : "active";
       meter.value = exposure;
-      status.textContent = `${selected.size} / ${step.targets.length} raccolti · ${Math.ceil(remaining)} s · esposizione ${exposure} / 5`;
+      setText(
+        status,
+        exposure >= 5
+          ? "Esposizione simbolica al limite. Ricomincia la raccolta."
+          : remaining === 0
+            ? "Tempo scaduto. Ricomincia e deposita prima del limite."
+            : `${selected.size} / ${step.targets.length} raccolti · ${Math.ceil(remaining)} s · esposizione ${exposure} / 5`,
+      );
       cells.forEach((b, i) => {
         b.disabled = !active || selected.has(i);
         b.classList.toggle("collected", selected.has(i));
@@ -413,7 +443,18 @@ export function renderActivity(
       copying = false,
       phase = 0,
       last = performance.now(),
-      started = last;
+      started = last,
+      nextAnnouncement = last;
+    const announce = (force = false, message) => {
+      const now = performance.now();
+      if (!force && (!copying || pending || now < nextAnnouncement)) return;
+      setText(
+        status,
+        message ||
+          `Copia ${Math.floor(progress)}% · ${copying ? "in corso. Puoi nasconderla senza perdere il lavoro." : "al riparo. Riprendi quando sei pronto."}`,
+      );
+      nextAnnouncement = now + 1000;
+    };
     const machine = node("div", "copy-machine");
     machine.append(
       node("div", "document-label", "FASCICOLO DI COPERTURA · PROJECT Y"),
@@ -432,6 +473,7 @@ export function renderActivity(
       () => {
         copying = !copying;
         toggle.textContent = copying ? "Nascondi" : "Riprendi copia";
+        announce(true);
         sound();
       },
       "button gold full",
@@ -449,7 +491,7 @@ export function renderActivity(
         copying = false;
         toggle.textContent = "Riprendi copia";
         machine.classList.remove("copying");
-        status.textContent = `Copia ${Math.floor(progress)}% · al riparo. Riprendi quando sei pronto.`;
+        announce(true);
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
@@ -464,11 +506,14 @@ export function renderActivity(
       phase = ((now - started) % 8000) / 1000;
       const danger = phase >= 6,
         warning = phase >= 4.5 && phase < 6;
-      watch.textContent = danger
-        ? "Sentinella nel corridoio · nascondi la copia"
-        : warning
-          ? "Passi in avvicinamento · preparati a nascondere"
-          : "Corridoio libero";
+      setText(
+        watch,
+        danger
+          ? "Sentinella nel corridoio · nascondi la copia"
+          : warning
+            ? "Passi in avvicinamento · preparati a nascondere"
+            : "Corridoio libero",
+      );
       machine.classList.toggle("alert", danger);
       machine.classList.toggle("copying", copying && !danger);
       if (copying && !pending && !document.hidden) {
@@ -476,21 +521,25 @@ export function renderActivity(
           progress = Math.max(0, progress - 18);
           copying = false;
           toggle.textContent = "Riprendi copia";
+          announce(
+            true,
+            `Copia interrotta dalla sentinella · ${Math.floor(progress)}% conservato. Riprendi quando il corridoio è libero.`,
+          );
           sound("wrong");
         } else progress = Math.min(100, progress + dt / 90);
       }
       bar.value = progress;
-      status.textContent = `Copia ${Math.floor(progress)}% · puoi nasconderla senza perdere il lavoro`;
       if (progress >= 100) {
         copying = false;
         const moveFocus = document.activeElement === toggle;
         toggle.hidden = true;
         confirm.hidden = false;
-        status.textContent = "Fascicolo pronto. Ritira la copia.";
+        setText(status, "Fascicolo pronto. Ritira la copia.");
         clearInterval(timer);
         if (moveFocus) confirm.focus();
-      }
+      } else announce();
     };
+    announce(true, "Copia 0% · avvia quando il corridoio è libero.");
     tick();
     timer = setInterval(tick, 100);
   }

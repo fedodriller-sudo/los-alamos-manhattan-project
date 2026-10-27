@@ -1739,8 +1739,21 @@ textarea {
   box-shadow: 0 0 18px #8bd5c230;
 }
 .route-cell.goal {
-  border: 2px solid var(--gold);
+  border: 3px double var(--gold);
   color: var(--gold);
+  background: #303527;
+  font-weight: 700;
+  opacity: 1;
+}
+.route-cell.available {
+  border-style: dashed;
+  border-width: 2px;
+  background: #2d4c59;
+  font-weight: 700;
+}
+.route-cell.available.goal {
+  border-style: double;
+  border-width: 3px;
 }
 .route-cell.visited {
   border-color: var(--mint);
@@ -2645,4 +2658,12 @@ button:active:not(:disabled) {
   padding: 0;
   margin: 0;
   min-width: 0;
+}
+
+/* Invitation is the useful primary action until both teams are represented. */
+.signal-panel[data-priority="invite"] {
+  border-color: var(--gold);
+}
+#copy-invite {
+  white-space: normal;
 }
