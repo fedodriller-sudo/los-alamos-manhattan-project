@@ -11,7 +11,9 @@ test("all seven missions have a valid canonical solution and a historical source
   }
 });
 test("route rejects jumps, walls, wrapping rows and incomplete deliveries", () => {
-  const s = TEAM_MISSIONS[1].steps[0];
+  const s = TEAM_MISSIONS.find((e) => e.id === "spy-rosenberg-forged").steps.find(
+    (step) => step.validation === "route",
+  );
   for (const p of [
     [0, 15],
     [0, 1, 2, 3, 7, 11, 15],

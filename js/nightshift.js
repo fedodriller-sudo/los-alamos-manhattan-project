@@ -483,7 +483,7 @@ function startSoloTeam(team) {
   toast(
     team === "spies"
       ? "Copertura attiva: completa le tre operazioni della rete sovietica."
-      : "Turno del Personale: completa le quattro missioni del laboratorio.",
+      : "Turno del Personale: Demon Core, glove box Pu/U, Trinity, ingresso.",
   );
 }
 $("solo-button").onclick = () => show("role-dialog");

@@ -295,11 +295,13 @@ export function renderActivity(
     const selected = new Set(),
       grid = node("div", "activity-grid");
     grid.style.setProperty("--grid-size", step.size);
+    if (step.banner) root.append(node("div", "instrument-label", step.banner));
     root.append(
       node(
         "p",
         "activity-instruction",
-        "Raccogli i 6 contrassegni luminosi e depositali entro 20 secondi. I settori vuoti aumentano l’esposizione simbolica.",
+        step.instruction ||
+          "Raccogli i 6 contrassegni luminosi e depositali entro 20 secondi. I settori vuoti aumentano l’esposizione simbolica.",
       ),
       grid,
     );
@@ -365,8 +367,10 @@ export function renderActivity(
     };
     for (let i = 0; i < step.size ** 2; i++) {
       const target = step.targets.includes(i),
+        tag = step.labels?.[i],
+        kind = tag === "Pu" ? " pu" : tag === "U" ? " u" : "",
         b = button(
-          target ? "✦" : "·",
+          tag || (target ? "✦" : "·"),
           () => {
             if (!active) return;
             if (target) {
@@ -379,11 +383,17 @@ export function renderActivity(
             if (exposure >= 5) active = false;
             update();
           },
-          "collect-cell" + (target ? " marked" : ""),
+          "collect-cell" + (target ? " marked" : "") + kind,
         );
       b.setAttribute(
         "aria-label",
-        (target ? "Contrassegno " : "Settore vuoto ") + (i + 1),
+        (tag === "Pu"
+          ? "Campione plutonio "
+          : tag === "U"
+            ? "Campione uranio "
+            : target
+              ? "Contrassegno "
+              : "Settore vuoto ") + (i + 1),
       );
       cells.push(b);
       grid.append(b);

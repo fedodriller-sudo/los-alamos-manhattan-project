@@ -1763,6 +1763,20 @@ textarea {
   border-color: var(--gold);
   color: var(--gold);
 }
+.collect-cell.pu {
+  background: #2a4a3c;
+  border-color: var(--mint);
+  color: var(--mint);
+  font-size: 15px;
+  font-weight: 700;
+}
+.collect-cell.u {
+  background: #3a3a48;
+  border-color: #9aa4c8;
+  color: #c5cbe0;
+  font-size: 15px;
+  font-weight: 700;
+}
 .collect-cell.collected {
   background: #31534e;
   color: var(--mint);
