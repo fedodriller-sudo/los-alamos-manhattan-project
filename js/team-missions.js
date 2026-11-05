@@ -150,7 +150,7 @@ export const TEAM_MISSIONS = [
       "Il test Trinity è già avvenuto, lontano da Los Alamos. Stai ripulendo il deserto: raccogli solo la sabbia «strana» (contaminata) perché non si sparga in altre parti del mondo. Lascia la sabbia normale.",
     fact: "Il test Trinity si svolse il 16 luglio 1945 nel New Mexico, in un sito distinto da Los Alamos. La ricaduta radioattiva interessò anche le comunità vicine e sottovento.",
     adaptation:
-      "Scegliere la sabbia diversa è un puzzle. Non ricostruisce una bonifica storica né indica il colore reale della sabbia.",
+      "Scegliere la sabbia diversa è un puzzle. La formula della seconda domanda è il decadimento radioattivo scolastico: non è un modello del test né una procedura di bonifica reale.",
     source: trinity,
     steps: [
       {
@@ -167,15 +167,17 @@ export const TEAM_MISSIONS = [
         feedback: "La sabbia diversa è nel sacco. Il resto del deserto resta al suo posto.",
       },
       {
-        prompt: "Perché raccogli solo la sabbia diversa?",
+        prompt:
+          "Quale formula descrive come decade la radioattività della ricaduta nella sabbia, col passare del tempo?",
         options: [
-          "Perché Trinity e Los Alamos erano lo stesso sito",
-          "Per contenere la contaminazione e non spargerla nel resto del mondo",
-          "Perché il verde era un segnale naturale di sicurezza",
+          "A = A₀ × 2^(t / T½)  — l’attività raddoppia a ogni tempo di dimezzamento",
+          "A = A₀ × (1/2)^(t / T½)  — l’attività si dimezza a ogni tempo di dimezzamento",
+          "I = I₀ × r²  — l’intensità cresce con il quadrato della distanza",
         ],
         answer: 1,
-        hint: "Il briefing parla di pulizia del deserto dopo il test.",
-        feedback: "Rapporto archiviato: la raccolta serve a non spargere la ricaduta.",
+        hint: "La ricaduta non diventa più radioattiva da sola: a ogni tempo di dimezzamento resta la metà dell’attività.",
+        feedback:
+          "Corretto: A = A₀ × (1/2)^(t / T½). È il decadimento radioattivo della ricaduta, non una formula del test.",
       },
     ],
   },
