@@ -168,14 +168,14 @@ test("install validates full release, offline query navigation uses canonical in
   assert.equal(await (await w.request("index.html?launch=1")).text(), "HTML A");
   assert.equal(await (await w.request("js/app.js?x=1")).text(), "MODULE A");
 });
-test("new release waits without claiming games; old cache survives install and is removed only at activation", async () => {
+test("new release skip-waits; old cache survives install and is removed only at activation", async () => {
   const a = worker();
   await a.install();
   await a.storage.open("los-alamos-nightshift-v6");
   await a.storage.open("unrelated-site");
   const b = worker("B", a.storage);
   await b.install();
-  assert.equal(b.skips, 0);
+  assert.equal(b.skips, 1);
   assert.equal(b.claims, 0);
   assert.equal(await (await a.request()).text(), "HTML A");
   assert.equal(await (await a.request("js/app.js")).text(), "MODULE A");
@@ -187,7 +187,7 @@ test("new release waits without claiming games; old cache survives install and i
     (await a.storage.keys()).sort(),
     [b.name(), "unrelated-site"].sort(),
   );
-  assert.equal(b.claims, 0);
+  assert.equal(b.claims, 1);
 });
 test("mixed or failed release install cannot replace previous usable package", async () => {
   const a = worker();

@@ -1380,8 +1380,19 @@ if (invite) {
   $("room-code").value = invite;
   show("lobby-dialog");
 }
-if ("serviceWorker" in navigator && window.isSecureContext)
-  navigator.serviceWorker.register("./sw.js").catch(() => {});
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  let reloading = false;
+  if (navigator.serviceWorker.controller)
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (reloading) return;
+      reloading = true;
+      location.reload();
+    });
+  navigator.serviceWorker
+    .register("./sw.js", { updateViaCache: "none" })
+    .then((reg) => reg.update())
+    .catch(() => {});
+}
 // Animated scenery stays decorative; historical episodes remain unchanged.
 const scenery = document.createElement("div");
 scenery.className = "living-campus";

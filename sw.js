@@ -58,11 +58,11 @@ self.addEventListener("install", (event) => {
         );
         if (writes.some((result) => result.status === "rejected"))
           throw new Error("Release cache incomplete");
+        await self.skipWaiting();
       } catch (error) {
         await caches.delete(CACHE_NAME);
         throw error;
       }
-      // Default waiting lifecycle: never replace a worker during an active game.
     })(),
   );
 });
@@ -81,7 +81,8 @@ self.addEventListener("activate", (event) => {
             )
             .map((key) => caches.delete(key)),
         ),
-      ),
+      )
+      .then(() => self.clients.claim()),
   );
 });
 self.addEventListener("fetch", (event) => {
